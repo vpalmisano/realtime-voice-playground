@@ -60,6 +60,9 @@ async function loadModels(key: string) {
 }
 
 export function getSessionOptions(): OpenAISessionOptions {
+  if (!apiKey.value) {
+    throw new Error('OpenAI API key is required');
+  }
   return {
     transportType: transport.value,
     model: model.value,

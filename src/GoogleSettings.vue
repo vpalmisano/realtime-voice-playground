@@ -15,6 +15,9 @@ const voice = defineReference('googleVoice', DEFAULT_VOICE, VOICES);
 const context = defineReference('googleContext', DEFAULT_CONTEXT);
 
 export function getSessionOptions(): GoogleSessionOptions {
+  if (!apiKey.value) {
+    throw new Error('Google API key is required');
+  }
   return {
     model: model.value,
     voice: voice.value,

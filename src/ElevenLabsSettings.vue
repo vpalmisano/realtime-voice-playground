@@ -25,6 +25,9 @@ const prefixPaddingMs = defineReference('elevenLabsPrefixPaddingMs', 300);
 const silenceDurationMs = defineReference('elevenLabsSilenceDurationMs', 500);
 
 export function getSessionOptions(): ElevenLabsSessionOptions {
+  if (!apiKey.value) {
+    throw new Error('ElevenLabs API key is required');
+  }
   return {
     model: model.value,
     voice: voice.value,

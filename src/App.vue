@@ -71,6 +71,7 @@ async function onConnect() {
 
     startWebrtcperfPlots(plotsEl.value);
   } catch (error) {
+    appendMessage(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
     onDisconnect(error instanceof Error ? error.message : 'Unknown error');
   } finally {
     connecting.value = false;
