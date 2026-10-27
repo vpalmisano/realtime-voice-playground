@@ -32,6 +32,7 @@ export async function processInputAudioTrack(
   track: MediaStreamTrack,
   targetSampleRate: number,
   callback: (pcm16: ArrayBuffer) => void,
+  chunkMs = 80,
 ) {
   if (track.kind !== 'audio') {
     throw new Error('Track is not an audio track');
@@ -50,6 +51,7 @@ export async function processInputAudioTrack(
     numberOfInputs: 1,
     numberOfOutputs: 1,
     outputChannelCount: [1],
+    processorOptions: { chunkMs },
   });
   worklet.port.onmessage = event => {
     const { type, buffer } = event.data ?? {};
@@ -73,8 +75,13 @@ export async function processInputAudioTrack(
     void audioCtx.close().catch(() => {});
   };
   track.addEventListener('ended', () => close());
+  const trackStop = track.stop.bind(track);
+  track.stop = () => {
+    close();
+    trackStop();
+  };
 
-  return { close };
+  return { close: track.stop };
 }
 
 export async function processOutputAudioTrack(sampleRate = 24000) {

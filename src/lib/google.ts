@@ -1,6 +1,7 @@
 import { GoogleGenAI, Modality, Session } from '@google/genai';
 import { appendMessage } from '../MessagesLog.vue';
 import { arrayBufferToBase64, processInputAudioTrack, processOutputAudioTrack } from './utils.ts';
+import { chunkMs } from '../PerfSettings.vue';
 import { DEFAULT_CONTEXT, ProviderSession } from './provider';
 import debug from 'debug';
 
@@ -154,13 +155,17 @@ export class GoogleAISession extends ProviderSession {
 
       const sourceAudioTrack = await this.getMediaStream();
 
-      const { close: closeInput } = await processInputAudioTrack(sourceAudioTrack, 16000, pcm16 =>
-        this.session?.sendRealtimeInput({
-          audio: {
-            data: arrayBufferToBase64(pcm16),
-            mimeType: 'audio/pcm;rate=16000',
-          },
-        }),
+      const { close: closeInput } = await processInputAudioTrack(
+        sourceAudioTrack,
+        16000,
+        pcm16 =>
+          this.session?.sendRealtimeInput({
+            audio: {
+              data: arrayBufferToBase64(pcm16),
+              mimeType: 'audio/pcm;rate=16000',
+            },
+          }),
+        chunkMs.value,
       );
       this.closeInputAudio = closeInput;
     } catch (error) {

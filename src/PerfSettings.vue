@@ -12,6 +12,7 @@ const saveResponseAudio = defineReference<boolean>('saveResponseAudio', false);
 const minTalkingDurationMs = defineReference<number>('minTalkingDurationMs', 40);
 const minSilentDurationMs = defineReference<number>('minSilentDurationMs', 1000);
 const detector = defineReference('detector', 'silero', DETECTORS);
+export const chunkMs = defineReference<number>('chunkMs', 80);
 
 const showQuestions = computed(() => overrideGetUserMedia.value);
 
@@ -136,39 +137,26 @@ defineProps<{
 </script>
 
 <template>
-  <div class="d-flex flex-wrap ga-4 align-center my-4" v-if="!connected">
-    <v-checkbox
-      v-model="overrideGetUserMedia"
-      label="Use fake audio input"
-      hide-details
-      density="compact"
-    />
-    <v-checkbox
-      v-model="saveResponseAudio"
-      label="Save output audio"
-      hide-details
-      density="compact"
-    />
-  </div>
-
-  <div v-if="showQuestions" class="mb-4">
-    <div class="text-subtitle-1 font-weight-bold mb-2">Audio inputs</div>
-    <div class="d-flex flex-wrap ga-2">
-      <v-btn
-        v-for="question in QUESTIONS"
-        :key="question"
-        size="small"
-        variant="outlined"
-        :disabled="!connected"
-        @click="onPlayQuestion(question)"
-      >
-        {{ question.replace('.mp3', '') }}
-      </v-btn>
-    </div>
-  </div>
-
   <div class="mb-4" v-if="!connected">
     <div class="text-subtitle-1 font-weight-bold mb-2">Q&A estimator setting</div>
+
+    <v-row>
+      <v-col cols="12" class="d-flex flex-wrap ga-2 align-center">
+        <v-checkbox
+          v-model="overrideGetUserMedia"
+          label="Use fake audio input"
+          hide-details
+          density="compact"
+        />
+        <v-checkbox
+          v-model="saveResponseAudio"
+          label="Save output audio"
+          hide-details
+          density="compact"
+        />
+      </v-col>
+    </v-row>
+
     <v-row>
       <v-col cols="12" md="4">
         <v-text-field
@@ -200,6 +188,33 @@ defineProps<{
           hide-details
         />
       </v-col>
+      <v-col cols="12" md="4">
+        <v-text-field
+          v-model.number="chunkMs"
+          label="Audio capture chunk size (ms)"
+          type="number"
+          min="20"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+        />
+      </v-col>
     </v-row>
+  </div>
+
+  <div v-if="showQuestions && connected" class="mb-4">
+    <div class="text-subtitle-1 font-weight-bold mb-2">Audio inputs</div>
+    <div class="d-flex flex-wrap ga-2">
+      <v-btn
+        v-for="question in QUESTIONS"
+        :key="question"
+        size="small"
+        variant="outlined"
+        :disabled="!connected"
+        @click="onPlayQuestion(question)"
+      >
+        {{ question.replace('.mp3', '') }}
+      </v-btn>
+    </div>
   </div>
 </template>

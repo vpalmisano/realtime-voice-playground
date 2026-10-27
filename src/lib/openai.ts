@@ -8,6 +8,7 @@ import { getWeatherTool } from './tools';
 import webrtcperf from '../webrtcperf';
 import { processInputAudioTrack, processOutputAudioTrack } from './utils';
 import { appendMessage } from '../MessagesLog.vue';
+import { chunkMs } from '../PerfSettings.vue';
 import { ProviderSession } from './provider';
 import debug from 'debug';
 
@@ -231,8 +232,11 @@ export class OpenAISession extends ProviderSession {
       });
 
       if (this.transportType === 'websocket') {
-        const { close: closeInput } = await processInputAudioTrack(sourceAudioTrack, 24000, pcm16 =>
-          this.session?.sendAudio(pcm16),
+        const { close: closeInput } = await processInputAudioTrack(
+          sourceAudioTrack,
+          24000,
+          pcm16 => this.session?.sendAudio(pcm16),
+          chunkMs.value,
         );
         this.closeInputAudio = closeInput;
         const { push, flush, track, close } = await processOutputAudioTrack(24000);

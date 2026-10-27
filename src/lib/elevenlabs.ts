@@ -2,6 +2,7 @@ import { OpenAIRealtimeWebSocket, RealtimeAgent, RealtimeSession } from '@openai
 import { appendMessage } from '../MessagesLog.vue';
 import { type TurnDetection } from './openai';
 import { processInputAudioTrack, processOutputAudioTrack } from './utils';
+import { chunkMs } from '../PerfSettings.vue';
 import { DEFAULT_CONTEXT, ProviderSession } from './provider';
 import debug from 'debug';
 
@@ -167,6 +168,7 @@ export class ElevenLabsSession extends ProviderSession {
         sourceAudioTrack,
         AUDIO_SAMPLE_RATE,
         pcm16 => this.session?.sendAudio(pcm16),
+        chunkMs.value,
       );
       this.closeInputAudio = closeInput;
 

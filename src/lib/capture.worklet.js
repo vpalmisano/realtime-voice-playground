@@ -1,11 +1,13 @@
 /**
- * Captures float input, converts to Int16 PCM, emits ~20ms chunks.
+ * Captures float input, converts to Int16 PCM, emits fixed-size chunks.
+ * Options: { chunkMs?: number } (default 80)
  * Out: { type: 'pcm', buffer: ArrayBuffer }
  */
 class Pcm16CaptureProcessor extends AudioWorkletProcessor {
-  constructor() {
+  constructor(options) {
     super();
-    this._chunkSamples = Math.max(1, Math.round(sampleRate * 0.02));
+    const chunkMs = options?.processorOptions?.chunkMs ?? 80;
+    this._chunkSamples = Math.max(1, Math.round(sampleRate * (chunkMs / 1000)));
     this._pending = new Int16Array(this._chunkSamples);
     this._pendingCount = 0;
     this._chunkPeak = 0;
