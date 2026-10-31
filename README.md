@@ -5,7 +5,7 @@
 An interactive webapp for trying voice AI — either **end-to-end realtime** models (OpenAI, Google, ElevenLabs) or a **custom STT → LLM → TTS pipeline** with different providers.
 Configure options, chat by text or mic, and optionally run scripted Q&A with [webrtcperf-js](https://github.com/vpalmisano/webrtcperf-js).
 
-![Demo](docs/demo.png)
+![Demo](public/docs/demo.png)
 
 ## Features
 
@@ -30,13 +30,13 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 - Node.js 24+
 - API keys for the providers you use:
 
-| Provider   | Where to get a key                                                                                         | Notes                                      |
-| ---------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| OpenAI     | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)                                       | Realtime, STT, LLM, and/or TTS             |
-| Google     | [aistudio.google.com/apikey](https://aistudio.google.com/apikey)                                           | Gemini Live, STT, LLM, and/or TTS          |
-| ElevenLabs | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys)                         | Realtime needs `convai_write`; also STT/TTS |
-| Cartesia   | [cartesia.ai](https://cartesia.ai)                                                                         | TTS (Custom pipeline)                      |
-| Speechify  | [console.sws.speechify.com](https://console.sws.speechify.com)                                             | TTS (Custom pipeline)                      |
+| Provider   | Where to get a key                                                                 | Notes                                       |
+| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------- |
+| OpenAI     | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)               | Realtime, STT, LLM, and/or TTS              |
+| Google     | [aistudio.google.com/apikey](https://aistudio.google.com/apikey)                   | Gemini Live, STT, LLM, and/or TTS           |
+| ElevenLabs | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) | Realtime needs `convai_write`; also STT/TTS |
+| Cartesia   | [cartesia.ai](https://cartesia.ai)                                                 | TTS (Custom pipeline)                       |
+| Speechify  | [console.sws.speechify.com](https://console.sws.speechify.com)                     | TTS (Custom pipeline)                       |
 
 ## Quick start
 
@@ -51,12 +51,12 @@ Open the URL Vite prints (default `http://localhost:5173`), choose a **Provider*
 
 ### Shared
 
-| Control                  | What it does                                                   |
-| ------------------------ | -------------------------------------------------------------- |
+| Control                  | What it does                                                             |
+| ------------------------ | ------------------------------------------------------------------------ |
 | **Provider**             | `Custom`, `ElevenLabs Realtime`, `Google Realtime`, or `OpenAI Realtime` |
-| **Use fake audio input** | Override mic with scripted clips; shows audio-input buttons    |
-| **Save output audio**    | Write assistant PCM to WAV downloads                           |
-| **Q&A estimator**        | Min talking/silent duration and detector (`simple` / `silero`) |
+| **Use fake audio input** | Override mic with scripted clips; shows audio-input buttons              |
+| **Save output audio**    | Write assistant PCM to WAV downloads                                     |
+| **Q&A estimator**        | Min talking/silent duration and detector (`simple` / `silero`)           |
 
 With fake audio enabled and connected, click a prompt under **Audio inputs** to inject that clip as the microphone stream. Turn timing is logged in the messages panel.
 
@@ -64,11 +64,11 @@ With fake audio enabled and connected, click a prompt under **Audio inputs** to 
 
 Pick a provider for each stage in the stepper. Audio is transcribed by STT, text goes to the LLM, and the LLM reply is spoken by TTS.
 
-| Stage | Providers                                      | Typical defaults                          |
-| ----- | ---------------------------------------------- | ----------------------------------------- |
-| STT   | ElevenLabs, Google, OpenAI                     | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
-| LLM   | Google, OpenAI                                 | e.g. `gpt-5.4`, `gemini-3.8-flash`        |
-| TTS   | Cartesia, ElevenLabs, Google, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest` |
+| Stage | Providers                                       | Typical defaults                               |
+| ----- | ----------------------------------------------- | ---------------------------------------------- |
+| STT   | ElevenLabs, Google, OpenAI                      | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
+| LLM   | Google, OpenAI                                  | e.g. `gpt-5.4`, `gemini-3.8-flash`             |
+| TTS   | Cartesia, ElevenLabs, Google, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
 
 Each stage has its own API key and model/voice fields. Keys and options are stored separately per provider.
 
