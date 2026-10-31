@@ -1,9 +1,6 @@
 import { OpenAIRealtimeWebSocket, RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
-import { appendMessage } from '../MessagesLog.vue';
-import { type TurnDetection } from './openai';
-import { processInputAudioTrack, processOutputAudioTrack } from './utils';
-import { chunkMs } from '../PerfSettings.vue';
-import { DEFAULT_CONTEXT, ProviderSession } from './provider';
+import { type TurnDetection } from '../openai/realtime.ts';
+import { DEFAULT_CONTEXT, BaseProvider } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:elevenlabs');
@@ -11,29 +8,17 @@ const log = debug('realtime:elevenlabs');
 export const REALTIME_URL = 'wss://api.elevenlabs.io/v1/convai/realtime';
 export const AUDIO_SAMPLE_RATE = 24000;
 
-export type ElevenLabsSessionOptions = {
+export type ElevenLabsRealtimeOptions = {
   model?: string;
   voice?: string;
   apiKey: string;
   context?: string;
   turnDetection?: TurnDetection;
+  chunkMs?: number;
 };
 
 export const DEFAULT_MODEL = 'eleven_realtime_v1_mini';
 export const DEFAULT_VOICE = 'brian';
-export const MODELS = ['eleven_realtime_v1_mini', 'eleven_realtime_v1_max'] as const;
-export const VOICES = [
-  'brian',
-  'rachel',
-  'adam',
-  'antoni',
-  'arnold',
-  'bella',
-  'domi',
-  'elli',
-  'josh',
-  'sam',
-] as const;
 
 async function createEphemeralClientSecret(
   apiKey: string,
@@ -109,17 +94,17 @@ async function createEphemeralClientSecret(
   return data.value;
 }
 
-export class ElevenLabsSession extends ProviderSession {
-  public readonly transportType = 'websocket' as const;
+export class ElevenLabsRealtime extends BaseProvider {
   private readonly model: string;
   private readonly voice: string;
   private readonly apiKey: string;
   private readonly context: string;
   private readonly turnDetection: TurnDetection;
+  private readonly chunkMs: number;
 
   private session: RealtimeSession | null = null;
 
-  constructor(options: ElevenLabsSessionOptions) {
+  constructor(options: ElevenLabsRealtimeOptions) {
     super();
     this.model = options.model ?? DEFAULT_MODEL;
     this.voice = options.voice ?? DEFAULT_VOICE;
@@ -129,6 +114,7 @@ export class ElevenLabsSession extends ProviderSession {
       type: 'semantic_vad',
       eagerness: 'medium',
     };
+    this.chunkMs = options.chunkMs ?? 80;
   }
 
   async start() {
@@ -138,13 +124,9 @@ export class ElevenLabsSession extends ProviderSession {
     log('start');
     this.running = true;
 
-    await appendMessage(
-      `Connecting to ElevenLabs via ${this.transportType} with model ${this.model}, voice ${this.voice}...\n`,
-    );
+    this.notify(`Connecting to ElevenLabs with model ${this.model}, voice ${this.voice}...\n`);
 
     try {
-      const sourceAudioTrack = await this.getMediaStream();
-
       const agent = new RealtimeAgent({
         name: 'ElevenLabs agent',
         instructions: this.context,
@@ -164,19 +146,16 @@ export class ElevenLabsSession extends ProviderSession {
         },
       });
 
-      const { close: closeInput } = await processInputAudioTrack(
-        sourceAudioTrack,
-        AUDIO_SAMPLE_RATE,
-        pcm16 => this.session?.sendAudio(pcm16),
-        chunkMs.value,
+      await this.setupSourceAudio(this.chunkMs, pcm16 => {
+        this.session?.sendAudio(pcm16 as ArrayBuffer);
+      });
+
+      const { push, flush } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE);
+      const pushAudio = push as (chunk: string) => void;
+
+      this.session.transport.on('response.output_audio.delta', event =>
+        pushAudio(atob(event.delta)),
       );
-      this.closeInputAudio = closeInput;
-
-      const { push, flush, track, close } = await processOutputAudioTrack(AUDIO_SAMPLE_RATE);
-      this.outputAudioTrack = track;
-      this.closeAudioContext = close;
-
-      this.session.transport.on('response.output_audio.delta', event => push(atob(event.delta)));
       this.session.transport.on('conversation.item.truncated', () => flush());
       this.session.transport.on('input_audio_buffer.speech_started', () => flush());
       this.session.on('audio_interrupted', () => flush());

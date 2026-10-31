@@ -1,74 +1,35 @@
 import { GoogleGenAI, Modality, Session } from '@google/genai';
-import { appendMessage } from '../MessagesLog.vue';
-import { arrayBufferToBase64, processInputAudioTrack, processOutputAudioTrack } from './utils.ts';
-import { chunkMs } from '../PerfSettings.vue';
-import { DEFAULT_CONTEXT, ProviderSession } from './provider';
+import { DEFAULT_CONTEXT, BaseProvider } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:google');
 
-export type GoogleSessionOptions = {
+export type GoogleRealtimeOptions = {
   model?: string;
   voice?: string;
   apiKey: string;
   context?: string;
+  chunkMs?: number;
 };
 
 export const DEFAULT_MODEL = 'gemini-3.8-live';
 export const DEFAULT_VOICE = 'Puck';
-export const MODELS = [
-  'gemini-3.8-live',
-  'gemini-3.8-live-extended-thinking',
-  'gemini-3.1-flash-live-preview',
-  'gemini-2.5-flash-native-audio-preview-12-2025',
-] as const;
-export const VOICES = [
-  'Achernar',
-  'Achird',
-  'Algenib',
-  'Algieba',
-  'Alnilam',
-  'Aoede',
-  'Autonoe',
-  'Callirrhoe',
-  'Charon',
-  'Despina',
-  'Enceladus',
-  'Erinome',
-  'Fenrir',
-  'Gacrux',
-  'Iapetus',
-  'Kore',
-  'Laomedeia',
-  'Leda',
-  'Orus',
-  'Puck',
-  'Pulcherrima',
-  'Rasalgethi',
-  'Sadachbia',
-  'Sadaltager',
-  'Schedar',
-  'Sulafat',
-  'Umbriel',
-  'Vindemiatrix',
-  'Zephyr',
-  'Zubenelgenubi',
-] as const;
 
-export class GoogleAISession extends ProviderSession {
-  public readonly transportType = 'websocket';
+export class GoogleAIRealtime extends BaseProvider {
   private model: string;
   private voice: string;
   private apiKey: string;
   private context: string;
+  private readonly chunkMs: number;
   private session: Session | null = null;
 
-  constructor(options: GoogleSessionOptions) {
+  constructor(options: GoogleRealtimeOptions) {
     super();
     this.model = options.model ?? DEFAULT_MODEL;
     this.voice = options.voice ?? DEFAULT_VOICE;
     this.apiKey = options.apiKey;
     this.context = options.context ?? DEFAULT_CONTEXT;
+    this.chunkMs = options.chunkMs ?? 80;
   }
 
   async start() {
@@ -78,14 +39,11 @@ export class GoogleAISession extends ProviderSession {
     log('start');
     this.running = true;
 
-    await appendMessage(
-      `Connecting to Google AI via ${this.transportType} with model ${this.model}, voice ${this.voice}...\n`,
-    );
+    this.notify(`Connecting to Google AI with model ${this.model}, voice ${this.voice}...\n`);
 
     try {
-      const { push, flush, track, close } = await processOutputAudioTrack(24000);
-      this.outputAudioTrack = track;
-      this.closeAudioContext = close;
+      const { push, flush } = await this.setupOutputAudio(24000);
+      const pushAudio = push as (chunk: string) => void;
 
       const ai = new GoogleGenAI({ apiKey: this.apiKey });
 
@@ -111,7 +69,7 @@ export class GoogleAISession extends ProviderSession {
                 if (part.inlineData) {
                   const audioData = part.inlineData.data;
                   if (audioData) {
-                    push(atob(audioData));
+                    pushAudio(atob(audioData));
                   }
                 }
               }
@@ -153,21 +111,18 @@ export class GoogleAISession extends ProviderSession {
         config,
       });
 
-      const sourceAudioTrack = await this.getMediaStream();
-
-      const { close: closeInput } = await processInputAudioTrack(
-        sourceAudioTrack,
-        16000,
-        pcm16 =>
+      await this.setupSourceAudio(
+        this.chunkMs,
+        binary => {
           this.session?.sendRealtimeInput({
             audio: {
-              data: arrayBufferToBase64(pcm16),
+              data: btoa(binary as string),
               mimeType: 'audio/pcm;rate=16000',
             },
-          }),
-        chunkMs.value,
+          });
+        },
+        true,
       );
-      this.closeInputAudio = closeInput;
     } catch (error) {
       log('error: %o', error);
       this.stop('Failed to start session');

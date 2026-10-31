@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import webrtcperf from './webrtcperf';
 import { appendMessage } from './MessagesLog.vue';
-import { defineReference } from './lib/utils';
+import { defineReference } from './utils';
 
 const DETECTORS = ['simple', 'silero'] as const;
 const QUESTIONS = __QUESTIONS__;
@@ -17,39 +17,10 @@ export const chunkMs = defineReference<number>('chunkMs', 80);
 const showQuestions = computed(() => overrideGetUserMedia.value);
 
 let stopQaDelayEstimation: (() => void) | null = null;
+let emitTurn: ((turn: webrtcperf.QuestionAnswerTurn) => void) | null = null;
 
-async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
-  console.log('turn', turn);
-  let msg = turn.mediaFile ? `"${turn.mediaFile}" ` : '';
-  const {
-    questionStartTime,
-    questionEndTime,
-    answerStartTime,
-    answerEndTime,
-    answerTalkingAfterInterruption,
-  } = turn;
-  switch (turn.phase) {
-    case 'question-start':
-      msg += `question start`;
-      break;
-    case 'question-end':
-      msg += `question duration: ${(questionEndTime - questionStartTime) / 1000}s`;
-      break;
-    case 'answer-start':
-      msg += `question/answer delay: ${(answerStartTime - questionEndTime) / 1000}s`;
-      break;
-    case 'answer-end':
-      msg += `answer duration: ${(answerEndTime - answerStartTime) / 1000}s`;
-      break;
-    case 'answer-interrupted':
-      if (answerTalkingAfterInterruption) {
-        msg += `answer interrupted, talking after interruption for ${answerTalkingAfterInterruption / 1000}s`;
-      } else {
-        msg += `answer interrupted`;
-      }
-      break;
-  }
-  await appendMessage(`${msg}\n`);
+function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
+  emitTurn?.(turn);
 }
 
 export function applyPerfConnectSettings() {
@@ -131,14 +102,25 @@ function onPlayQuestion(name: string) {
 </script>
 
 <script setup lang="ts">
+import { onUnmounted } from 'vue';
+
 defineProps<{
   connected: boolean;
 }>();
+
+const emit = defineEmits<{
+  turn: [turn: webrtcperf.QuestionAnswerTurn];
+}>();
+
+emitTurn = turn => emit('turn', turn);
+onUnmounted(() => {
+  emitTurn = null;
+});
 </script>
 
 <template>
   <div class="mb-4" v-if="!connected">
-    <div class="text-subtitle-1 font-weight-bold mb-2">Q&A estimator setting</div>
+    <div class="text-subtitle-1 font-weight-bold mb-2">Q&A estimator settings</div>
 
     <v-row>
       <v-col cols="12" class="d-flex flex-wrap ga-2 align-center">

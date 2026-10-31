@@ -5,7 +5,7 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "npm run lint && npm run format && vite --host 0.0.0.0",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint . --fix",
@@ -16,6 +16,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.13",
     "@types/events": "^3.0.3",
+    "@types/hammerjs": "^2.0.46",
     "@types/node": "^26.6.5",
     "@vitejs/plugin-vue": "^6.0.9",
     "@vue/eslint-config-prettier": "^10.2.0",
@@ -30,16 +31,23 @@
     "vue-tsc": "^3.3.13"
   },
   "dependencies": {
-    "@elevenlabs/elevenlabs-js": "^2.74.0",
-    "@google/genai": "^2.31.0",
+    "@cartesia/cartesia-js": "^4.2.0",
+    "@elevenlabs/client": "^1.32.1",
+    "@elevenlabs/elevenlabs-js": "^2.75.0",
+    "@google/genai": "^2.32.0",
+    "@gradium/sdk": "^0.1.0",
     "@mdi/font": "^7.4.47",
     "@openai/agents": "^0.21.0",
     "@ricky0123/vad-web": "^0.0.31",
-    "@vpalmisano/webrtcperf-js": "1.9.0",
+    "@speechify/api": "^5.0.0",
+    "@vpalmisano/webrtcperf-js": "1.9.2",
     "chart.js": "^4.6.1",
+    "chartjs-plugin-zoom": "^2.2.0",
     "debug": "^4.4.3",
     "events": "^3.3.0",
+    "hammerjs": "^2.0.8",
     "onnxruntime-web": "^1.31.1",
+    "openai": "^7.45.1",
     "vue": "^3.5.44",
     "vuetify": "^4.3.1",
     "zod": "^4.6.7"

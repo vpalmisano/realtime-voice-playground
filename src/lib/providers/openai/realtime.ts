@@ -4,12 +4,9 @@ import {
   OpenAIRealtimeWebRTC,
   OpenAIRealtimeWebSocket,
 } from '@openai/agents/realtime';
-import { getWeatherTool } from './tools';
-import webrtcperf from '../webrtcperf';
-import { processInputAudioTrack, processOutputAudioTrack } from './utils';
-import { appendMessage } from '../MessagesLog.vue';
-import { chunkMs } from '../PerfSettings.vue';
-import { ProviderSession } from './provider';
+import { getWeatherTool } from '../../tools.ts';
+import webrtcperf from '../../../webrtcperf.ts';
+import { BaseProvider } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:openai');
@@ -45,7 +42,7 @@ export function buildTurnDetection(options: {
   };
 }
 
-export type OpenAISessionOptions = {
+export type OpenAIRealtimeOptions = {
   transportType?: TransportType;
   model?: string;
   voice?: string;
@@ -53,77 +50,16 @@ export type OpenAISessionOptions = {
   apiKey: string;
   context?: string;
   turnDetection?: TurnDetection;
+  chunkMs?: number;
 };
 
 export const TRANSPORTS = ['websocket', 'webrtc'] as const;
 export const DEFAULT_VOICE = 'alloy';
-export const VOICES = [
-  'marin',
-  'cedar',
-  'alloy',
-  'ash',
-  'ballad',
-  'coral',
-  'echo',
-  'sage',
-  'shimmer',
-  'verse',
-] as const;
-export const TRANSCRIPTION_MODELS = [
-  'gpt-4o-transcribe',
-  'gpt-4o-mini-transcribe',
-  'whisper-1',
-] as const;
 export const TURN_DETECTION_TYPES = ['semantic_vad', 'server_vad'] as const;
 export const EAGERNESS_OPTIONS = ['auto', 'low', 'medium', 'high'] as const;
 
-export const FALLBACK_MODELS = [
-  'gpt-live-1',
-  'gpt-realtime-2.1',
-  'gpt-realtime-2.1-mini',
-  'gpt-realtime-2',
-  'gpt-realtime-1.5',
-  'gpt-realtime',
-  'gpt-realtime-mini',
-] as const;
-
 export const DEFAULT_MODEL = 'gpt-realtime-2.1';
-
-function isRealtimeConversationModel(id: string) {
-  const lower = id.toLowerCase();
-  if (/transcribe|transcription|translate|whisper/.test(lower)) return false;
-  return /realtime|gpt-live/.test(lower);
-}
-
-const MODELS_CACHE_TTL_MS = 60 * 60 * 1000;
-let modelsCache: { key: string; models: string[]; expiresAt: number } | null = null;
-
-export async function fetchModels(key: string): Promise<string[]> {
-  if (!key) {
-    return [...FALLBACK_MODELS];
-  }
-
-  if (modelsCache && modelsCache.key === key && Date.now() < modelsCache.expiresAt) {
-    return modelsCache.models;
-  }
-
-  const response = await fetch('https://api.openai.com/v1/models', {
-    headers: { Authorization: `Bearer ${key}` },
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to list models (${response.status})`);
-  }
-
-  const data = (await response.json()) as { data?: { id: string; created: number }[] };
-  const fetched = (data.data ?? [])
-    .filter(m => isRealtimeConversationModel(m.id))
-    .sort((a, b) => b.created - a.created)
-    .map(m => m.id);
-
-  const models = fetched.length > 0 ? fetched : [...FALLBACK_MODELS];
-  modelsCache = { key, models, expiresAt: Date.now() + MODELS_CACHE_TTL_MS };
-  return models;
-}
+export const DEFAULT_TRANSCRIPTION_MODEL = 'gpt-4o-transcribe';
 
 async function createEphemeralClientSecret(apiKey: string, model: string): Promise<string> {
   const response = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
@@ -152,18 +88,20 @@ async function createEphemeralClientSecret(apiKey: string, model: string): Promi
   return data.value;
 }
 
-export class OpenAISession extends ProviderSession {
-  public readonly transportType: TransportType;
+export class OpenAIRealtime extends BaseProvider {
+  private readonly transportType: TransportType;
   private readonly model: string;
   private readonly voice: string;
   private readonly transcriptionModel: string;
   private readonly apiKey: string;
   private readonly context: string;
   private readonly turnDetection: TurnDetection;
+  private readonly chunkMs: number;
+  private audioElement: HTMLAudioElement | null = null;
 
   private session: RealtimeSession | null = null;
 
-  constructor(options: OpenAISessionOptions) {
+  constructor(options: OpenAIRealtimeOptions) {
     super();
     this.transportType = options.transportType ?? 'webrtc';
     this.model = options.model ?? DEFAULT_MODEL;
@@ -175,6 +113,7 @@ export class OpenAISession extends ProviderSession {
       eagerness: 'auto',
     };
     this.context = options.context ?? 'You help users answering questions.';
+    this.chunkMs = options.chunkMs ?? 80;
   }
 
   async start() {
@@ -184,12 +123,12 @@ export class OpenAISession extends ProviderSession {
     log('start');
     this.running = true;
 
-    await appendMessage(
+    this.notify(
       `Connecting to OpenAI via ${this.transportType} with model ${this.model}, voice ${this.voice}, transcription ${this.transcriptionModel}...\n`,
     );
 
     try {
-      const sourceAudioTrack = await this.getMediaStream();
+      await this.getMediaStream();
 
       const transport = this.createTransport();
 
@@ -232,18 +171,15 @@ export class OpenAISession extends ProviderSession {
       });
 
       if (this.transportType === 'websocket') {
-        const { close: closeInput } = await processInputAudioTrack(
-          sourceAudioTrack,
-          24000,
-          pcm16 => this.session?.sendAudio(pcm16),
-          chunkMs.value,
-        );
-        this.closeInputAudio = closeInput;
-        const { push, flush, track, close } = await processOutputAudioTrack(24000);
-        this.outputAudioTrack = track;
-        this.closeAudioContext = close;
+        await this.setupSourceAudio(this.chunkMs, pcm16 => {
+          this.session?.sendAudio(pcm16 as ArrayBuffer);
+        });
+        const { push, flush } = await this.setupOutputAudio(24000);
+        const pushAudio = push as (chunk: string) => void;
 
-        this.session.transport.on('response.output_audio.delta', event => push(atob(event.delta)));
+        this.session.transport.on('response.output_audio.delta', event =>
+          pushAudio(atob(event.delta)),
+        );
         this.session.transport.on('conversation.item.truncated', () => flush());
         this.session.transport.on('input_audio_buffer.speech_started', () => flush());
       }
@@ -316,5 +252,7 @@ export class OpenAISession extends ProviderSession {
     this.session?.interrupt();
     this.session?.close();
     this.session = null;
+    this.audioElement?.remove();
+    this.audioElement = null;
   }
 }
