@@ -19,8 +19,8 @@ import PerfSettings, {
   maybeSaveResponseAudio,
   startEstimateQuestionAnswerDelay,
   startWebrtcperfPlots,
-  stopEstimateQuestionAnswerDelay,
   stopWebrtcperfPlots,
+  stopEstimateQuestionAnswerDelay,
 } from './PerfSettings.vue';
 import { defineReference } from './utils.ts';
 import { GoogleAIRealtime } from './lib/providers/google/realtime.ts';
@@ -188,15 +188,15 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
       waveformRef.value?.addMarker(questionStartTime, INPUT_COLOR, msg);
       break;
     case 'question-end':
-      msg += `question end, duration: ${(questionEndTime - questionStartTime) / 1000}s`;
+      msg += `question end (${(questionEndTime - questionStartTime) / 1000}s)`;
       waveformRef.value?.addMarker(questionEndTime, INPUT_COLOR, msg);
       break;
     case 'answer-start':
-      msg += `answer start after: ${(answerStartTime - questionEndTime) / 1000}s`;
+      msg += `answer start, TTFA: ${(answerStartTime - questionEndTime) / 1000}s`;
       waveformRef.value?.addMarker(answerStartTime, OUTPUT_COLOR, msg);
       break;
     case 'answer-end':
-      msg += `answer end, duration: ${(answerEndTime - answerStartTime) / 1000}s`;
+      msg += `answer end (${(answerEndTime - answerStartTime) / 1000}s)`;
       waveformRef.value?.addMarker(answerEndTime, OUTPUT_COLOR, msg);
       break;
     case 'answer-interrupted':

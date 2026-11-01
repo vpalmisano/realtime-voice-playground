@@ -97,7 +97,6 @@ export class GoogleLLM extends BaseProvider {
       this.responseTokenCount += responseTokens;
 
       assistantText = assistantText.trim();
-      log('generate complete: %s', assistantText);
 
       if (assistantText) {
         this.messages.push({ role: 'model', parts: [{ text: assistantText }] });
@@ -121,8 +120,9 @@ export class GoogleLLM extends BaseProvider {
   protected closeSession(reason?: string): void {
     log('closeSession %s', reason ?? '');
     this.textAggregator.removeAllListeners();
+    this.textAggregator.clear();
     this.abortController?.abort();
     this.abortController = null;
-    this.messages.splice(0, this.messages.length);
+    this.messages.length = 0;
   }
 }

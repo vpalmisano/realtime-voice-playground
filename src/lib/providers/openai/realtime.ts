@@ -7,6 +7,7 @@ import {
 import { getWeatherTool } from '../../tools.ts';
 import webrtcperf from '../../../webrtcperf.ts';
 import { BaseProvider, type VadOptions } from '../base.ts';
+import { VoiceActivityDetector } from '@vpalmisano/webrtcperf-js';
 import debug from 'debug';
 
 const log = debug('realtime:openai');
@@ -130,6 +131,9 @@ export class OpenAIRealtime extends BaseProvider {
 
     try {
       await this.getMediaStream();
+      if (!this.sourceAudioTrack) {
+        throw new Error('Failed to get source audio track');
+      }
 
       const transport = this.createTransport();
 
@@ -183,6 +187,12 @@ export class OpenAIRealtime extends BaseProvider {
         );
         this.session.transport.on('conversation.item.truncated', () => flush());
         this.session.transport.on('input_audio_buffer.speech_started', () => flush());
+      } else {
+        this.sourceAudioVad = new VoiceActivityDetector({
+          track: this.sourceAudioTrack,
+          ...this.vadOptions,
+        });
+        await this.sourceAudioVad.start();
       }
 
       const connectApiKey = await createEphemeralClientSecret(this.apiKey, this.model);
@@ -215,6 +225,11 @@ export class OpenAIRealtime extends BaseProvider {
 
       if (this.transportType === 'webrtc') {
         this.outputAudioTrack = await webrtcperf.getTransceiversTrack('recv', 'audio');
+        this.outputAudioVad = new VoiceActivityDetector({
+          track: this.outputAudioTrack,
+          ...this.vadOptions,
+        });
+        await this.outputAudioVad.start();
       }
 
       if (!this.outputAudioTrack) {

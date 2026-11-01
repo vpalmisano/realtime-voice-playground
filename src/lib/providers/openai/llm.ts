@@ -121,8 +121,9 @@ export class OpenAILLM extends BaseProvider {
   protected closeSession(reason?: string): void {
     log('closeSession %s', reason ?? '');
     this.textAggregator.removeAllListeners();
+    this.textAggregator.clear();
     this.abortController?.abort();
     this.abortController = null;
-    this.messages.splice(0, this.messages.length);
+    this.messages.length = 0;
   }
 }

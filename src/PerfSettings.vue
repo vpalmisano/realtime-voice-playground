@@ -93,6 +93,7 @@ export function startWebrtcperfPlots(container: HTMLElement | null) {
       'inbound_websocket_messageRate',
       'inbound_websocket_bytes',
       'inbound_websocket_messages',
+      'inbound_audio_questionAnswerDelay',
     ],
   });
 }
