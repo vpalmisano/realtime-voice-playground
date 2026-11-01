@@ -4,6 +4,7 @@ import { DEFAULT_MODEL, type GoogleLLMOptions } from '../../lib/providers/google
 import { GOOGLE_LLM_FALLBACK_MODELS, fetchModels } from '../../lib/providers/google/utils';
 import { defineReference } from '../../utils';
 import { DEFAULT_CONTEXT } from '../../lib/providers/base';
+import { LLM_TEXT_AGGREGATION_DEFAULT, LLM_TEXT_AGGREGATIONS } from '../../lib/text';
 
 const PREFIX = 'GoogleLLM:';
 
@@ -19,6 +20,11 @@ const models = ref<string[]>([...GOOGLE_LLM_FALLBACK_MODELS]);
 const modelsLoading = ref(false);
 const model = defineReference<string>(`${PREFIX}Model`, DEFAULT_MODEL);
 const context = defineReference(`${PREFIX}Context`, DEFAULT_CONTEXT);
+const textAggregation = defineReference(
+  `${PREFIX}TextAggregation`,
+  LLM_TEXT_AGGREGATION_DEFAULT,
+  LLM_TEXT_AGGREGATIONS,
+);
 
 async function loadModels(key: string) {
   modelsLoading.value = true;
@@ -44,6 +50,7 @@ export function getOptions(): GoogleLLMOptions {
     model: model.value,
     apiKey: apiKey.value,
     context: context.value || undefined,
+    textAggregation: textAggregation.value,
   };
 }
 </script>
@@ -76,6 +83,16 @@ onMounted(() => {
         :items="models"
         :loading="modelsLoading"
         label="Google LLM Model"
+        variant="outlined"
+        density="comfortable"
+        hide-details
+      />
+    </v-col>
+    <v-col cols="12" md="6" lg="4">
+      <v-select
+        v-model="textAggregation"
+        :items="[...LLM_TEXT_AGGREGATIONS]"
+        label="Text Aggregation"
         variant="outlined"
         density="comfortable"
         hide-details

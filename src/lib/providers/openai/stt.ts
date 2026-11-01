@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { OpenAIRealtimeWebSocket } from 'openai/realtime/websocket';
-import { BaseProvider } from '../base.ts';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:openai-stt');
@@ -70,13 +70,14 @@ export class OpenAISTT extends BaseProvider {
   private readonly chunkMs: number;
   private connection: OpenAIRealtimeWebSocket | null = null;
 
-  constructor(options: OpenAISTTOptions) {
+  constructor(options: OpenAISTTOptions, vadOptions?: VadOptions) {
     super();
     this.apiKey = options.apiKey;
     this.model = options.model ?? DEFAULT_MODEL;
     this.silenceDurationMs = options.silenceDurationMs ?? 500;
     this.threshold = options.threshold ?? 0.5;
     this.chunkMs = options.chunkMs ?? 80;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

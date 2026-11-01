@@ -24,15 +24,17 @@ import { OpenAILLM } from '../lib/providers/openai/llm.ts';
 import { SpeechifyTTS } from '../lib/providers/speechify/tts.ts';
 import { CartesiaTTS } from '../lib/providers/cartesia/tts.ts';
 import type { BaseProvider } from '../lib/providers/base.ts';
+import { getVadOptions } from '../PerfSettings.vue';
 
 export function getSttProvider(): BaseProvider {
+  const vadOptions = getVadOptions();
   switch (getSttProviderName()) {
     case 'Google':
-      return new GoogleSTT(getGoogleSTTOptions());
+      return new GoogleSTT(getGoogleSTTOptions(), vadOptions);
     case 'OpenAI':
-      return new OpenAISTT(getOpenaiSTTOptions());
+      return new OpenAISTT(getOpenaiSTTOptions(), vadOptions);
     case 'ElevenLabs':
-      return new ElevenLabsSTT(getElevenLabsSTTOptions());
+      return new ElevenLabsSTT(getElevenLabsSTTOptions(), vadOptions);
     default:
       throw new Error('Invalid STT provider');
   }
@@ -50,17 +52,18 @@ export function getLlmProvider(): BaseProvider {
 }
 
 export function getTtsProvider(): BaseProvider {
+  const vadOptions = getVadOptions();
   switch (getTtsProviderName()) {
     case 'Google':
-      return new GoogleTTS(getGoogleTTSOptions());
+      return new GoogleTTS(getGoogleTTSOptions(), vadOptions);
     case 'OpenAI':
-      return new OpenAITTS(getOpenaiTTSOptions());
+      return new OpenAITTS(getOpenaiTTSOptions(), vadOptions);
     case 'Speechify':
-      return new SpeechifyTTS(getSpeechifyTTSOptions());
+      return new SpeechifyTTS(getSpeechifyTTSOptions(), vadOptions);
     case 'Cartesia':
-      return new CartesiaTTS(getCartesiaTTSOptions());
+      return new CartesiaTTS(getCartesiaTTSOptions(), vadOptions);
     case 'ElevenLabs':
-      return new ElevenLabsTTS(getElevenLabsTTSOptions());
+      return new ElevenLabsTTS(getElevenLabsTTSOptions(), vadOptions);
     default:
       throw new Error('Invalid TTS provider');
   }

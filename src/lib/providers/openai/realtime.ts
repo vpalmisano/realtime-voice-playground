@@ -6,7 +6,7 @@ import {
 } from '@openai/agents/realtime';
 import { getWeatherTool } from '../../tools.ts';
 import webrtcperf from '../../../webrtcperf.ts';
-import { BaseProvider } from '../base.ts';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:openai');
@@ -101,7 +101,7 @@ export class OpenAIRealtime extends BaseProvider {
 
   private session: RealtimeSession | null = null;
 
-  constructor(options: OpenAIRealtimeOptions) {
+  constructor(options: OpenAIRealtimeOptions, vadOptions?: VadOptions) {
     super();
     this.transportType = options.transportType ?? 'webrtc';
     this.model = options.model ?? DEFAULT_MODEL;
@@ -114,6 +114,7 @@ export class OpenAIRealtime extends BaseProvider {
     };
     this.context = options.context ?? 'You help users answering questions.';
     this.chunkMs = options.chunkMs ?? 80;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

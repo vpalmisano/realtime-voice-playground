@@ -6,7 +6,7 @@ import {
   AudioFormat,
 } from '@elevenlabs/client';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { BaseProvider } from '../base.ts';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:elevenlabs-stt');
@@ -31,11 +31,12 @@ export class ElevenLabsSTT extends BaseProvider {
   private readonly chunkMs: number;
   private connection: RealtimeConnection | null = null;
 
-  constructor(options: ElevenLabsSTTOptions) {
+  constructor(options: ElevenLabsSTTOptions, vadOptions?: VadOptions) {
     super();
     this.apiKey = options.apiKey;
     this.modelId = options.modelId ?? DEFAULT_MODEL;
     this.chunkMs = options.chunkMs ?? 80;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

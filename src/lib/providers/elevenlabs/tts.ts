@@ -1,5 +1,5 @@
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { BaseProvider } from '../base.ts';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:elevenlabs-tts');
@@ -35,11 +35,12 @@ export class ElevenLabsTTS extends BaseProvider {
   private connection: WebSocket | null = null;
   private push: ((chunk: string) => void) | null = null;
 
-  constructor(options: ElevenLabsTTSOptions) {
+  constructor(options: ElevenLabsTTSOptions, vadOptions?: VadOptions) {
     super();
     this.apiKey = options.apiKey;
     this.voiceId = options.voiceId ?? DEFAULT_VOICE_ID;
     this.modelId = options.modelId ?? DEFAULT_MODEL;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

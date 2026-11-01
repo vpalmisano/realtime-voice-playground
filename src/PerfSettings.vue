@@ -3,6 +3,8 @@ import { computed } from 'vue';
 import webrtcperf from './webrtcperf';
 import { appendMessage } from './MessagesLog.vue';
 import { defineReference } from './utils';
+import type { VadOptions } from './lib/providers/base.ts';
+import type { VoiceActivityDetector } from '@vpalmisano/webrtcperf-js';
 
 const DETECTORS = ['simple', 'silero'] as const;
 const QUESTIONS = __QUESTIONS__;
@@ -21,6 +23,14 @@ let emitTurn: ((turn: webrtcperf.QuestionAnswerTurn) => void) | null = null;
 
 function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
   emitTurn?.(turn);
+}
+
+export function getVadOptions(): VadOptions {
+  return {
+    minSilentDurationMs: minSilentDurationMs.value,
+    minTalkingDurationMs: minTalkingDurationMs.value,
+    detector: detector.value,
+  };
 }
 
 export function applyPerfConnectSettings() {
@@ -45,16 +55,13 @@ export function maybeDownloadResponseAudio(track: MediaStreamTrack | null) {
 }
 
 export async function startEstimateQuestionAnswerDelay(
-  sendTrack: MediaStreamTrack,
-  recvTrack: MediaStreamTrack,
+  sendVad: VoiceActivityDetector,
+  recvVad: VoiceActivityDetector,
 ) {
   stopQaDelayEstimation =
     (await webrtcperf.estimateQuestionAnswerDelay({
-      sendTrack,
-      recvTrack,
-      minTalkingDurationMs: minTalkingDurationMs.value,
-      minSilentDurationMs: minSilentDurationMs.value,
-      detector: detector.value,
+      sendVad,
+      recvVad,
       callback: onTurn,
     })) ?? null;
 }

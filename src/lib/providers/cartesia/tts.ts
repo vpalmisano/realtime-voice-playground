@@ -1,5 +1,6 @@
 import Cartesia from '@cartesia/cartesia-js';
-import { BaseProvider } from '../base.ts';
+import { AwaitQueue, AwaitQueueRemovedTaskError, AwaitQueueStoppedError } from 'awaitqueue';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:cartesia-tts');
@@ -21,15 +22,17 @@ export class CartesiaTTS extends BaseProvider {
   private readonly model: string;
   private readonly voiceId: string;
   private readonly language?: string;
+  private readonly asyncQueue = new AwaitQueue();
   private push: ((bytes: Uint8Array<ArrayBuffer>) => void) | null = null;
   private abortController: AbortController | null = null;
 
-  constructor(options: CartesiaTTSOptions) {
+  constructor(options: CartesiaTTSOptions, vadOptions?: VadOptions) {
     super();
     this.client = new Cartesia({ apiKey: options.apiKey });
     this.model = options.model ?? DEFAULT_MODEL;
     this.voiceId = options.voiceId ?? DEFAULT_VOICE_ID;
     this.language = options.language || undefined;
+    this.vadOptions = vadOptions;
   }
 
   async start() {
@@ -52,6 +55,9 @@ export class CartesiaTTS extends BaseProvider {
   flush(): void {
     this.abortController?.abort();
     this.abortController = null;
+    while (this.asyncQueue.size > 1) {
+      this.asyncQueue.remove(this.asyncQueue.size - 1);
+    }
     super.flush();
   }
 
@@ -63,12 +69,21 @@ export class CartesiaTTS extends BaseProvider {
     if (!text) {
       return;
     }
-    void this.synthesize(text);
+    void this.asyncQueue
+      .push(() => this.synthesize(text))
+      .catch(error => {
+        if (
+          error instanceof AwaitQueueStoppedError ||
+          error instanceof AwaitQueueRemovedTaskError
+        ) {
+          return;
+        }
+        log('queue error: %o', error);
+      });
   }
 
   private async synthesize(text: string) {
     log('synthesize: "%s"', text);
-    this.abortController?.abort();
     const abortController = new AbortController();
     this.abortController = abortController;
 
@@ -122,6 +137,7 @@ export class CartesiaTTS extends BaseProvider {
     log('closeSession %s', reason ?? '');
     this.abortController?.abort();
     this.abortController = null;
+    this.asyncQueue.stop();
     this.push = null;
   }
 }

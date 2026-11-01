@@ -1,5 +1,5 @@
 import { GoogleGenAI, Modality, Session } from '@google/genai';
-import { DEFAULT_CONTEXT, BaseProvider } from '../base.ts';
+import { DEFAULT_CONTEXT, BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:google');
@@ -23,13 +23,14 @@ export class GoogleAIRealtime extends BaseProvider {
   private readonly chunkMs: number;
   private session: Session | null = null;
 
-  constructor(options: GoogleRealtimeOptions) {
+  constructor(options: GoogleRealtimeOptions, vadOptions?: VadOptions) {
     super();
     this.model = options.model ?? DEFAULT_MODEL;
     this.voice = options.voice ?? DEFAULT_VOICE;
     this.apiKey = options.apiKey;
     this.context = options.context ?? DEFAULT_CONTEXT;
     this.chunkMs = options.chunkMs ?? 80;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

@@ -1,5 +1,5 @@
 import { AudioTranscriptionConfigMode, GoogleGenAI, Modality, Session } from '@google/genai';
-import { BaseProvider } from '../base.ts';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:google-stt');
@@ -21,12 +21,13 @@ export class GoogleSTT extends BaseProvider {
   private readonly chunkMs: number;
   private session: Session | null = null;
 
-  constructor(options: GoogleSTTOptions) {
+  constructor(options: GoogleSTTOptions, vadOptions?: VadOptions) {
     super();
     this.apiKey = options.apiKey;
     this.model = options.model ?? DEFAULT_MODEL;
     this.mode = options.mode ?? 'SMART';
     this.chunkMs = options.chunkMs ?? 80;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

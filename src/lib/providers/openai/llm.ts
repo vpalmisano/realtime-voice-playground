@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import type { ResponseInputItem } from 'openai/resources/responses/responses';
 import { DEFAULT_CONTEXT, BaseProvider } from '../base.ts';
 import debug from 'debug';
+import { TextAggregator, type LLMTextAggregation } from '../../text.ts';
 
 const log = debug('realtime:openai-llm');
 
@@ -10,6 +11,7 @@ export type OpenAILLMOptions = {
   model?: string;
   context?: string;
   maxUserMessages?: number;
+  textAggregation?: LLMTextAggregation;
 };
 
 export const DEFAULT_MODEL = 'gpt-5.4';
@@ -19,6 +21,7 @@ export class OpenAILLM extends BaseProvider {
   private readonly model: string;
   private readonly context: string;
   private readonly maxUserMessages: number;
+  private readonly textAggregator: TextAggregator;
   private readonly messages: ResponseInputItem[] = [];
   private abortController: AbortController | null = null;
 
@@ -31,6 +34,8 @@ export class OpenAILLM extends BaseProvider {
     this.model = options.model ?? DEFAULT_MODEL;
     this.context = options.context ?? DEFAULT_CONTEXT;
     this.maxUserMessages = options.maxUserMessages ?? 20;
+    this.textAggregator = new TextAggregator(options.textAggregation);
+    this.textAggregator.on('text', text => this.emit('text', text));
   }
 
   async start() {
@@ -39,7 +44,7 @@ export class OpenAILLM extends BaseProvider {
     }
     log('start model=%s', this.model);
     this.running = true;
-    this.notify(`OpenAI LLM ready with model ${this.model}...\n`);
+    this.notify(`OpenAI LLM ready with model ${this.model}\n`);
   }
 
   sendMessage(message: string): void {
@@ -80,8 +85,9 @@ export class OpenAILLM extends BaseProvider {
       for await (const event of stream) {
         if (event.type === 'response.output_text.delta') {
           assistantText += event.delta;
+
+          this.textAggregator.append(event.delta);
         } else if (event.type === 'response.completed') {
-          log('response.completed', assistantText);
           const usage = event.response.usage;
           if (usage) {
             this.promptTokenCount += usage.input_tokens;
@@ -95,8 +101,9 @@ export class OpenAILLM extends BaseProvider {
 
       if (assistantText) {
         this.messages.push({ role: 'assistant', content: assistantText });
-        this.emit('text', assistantText);
       }
+
+      this.textAggregator.flush();
     } catch (error) {
       if (abortController.signal.aborted) {
         log('generate aborted');
@@ -113,6 +120,7 @@ export class OpenAILLM extends BaseProvider {
 
   protected closeSession(reason?: string): void {
     log('closeSession %s', reason ?? '');
+    this.textAggregator.removeAllListeners();
     this.abortController?.abort();
     this.abortController = null;
     this.messages.splice(0, this.messages.length);

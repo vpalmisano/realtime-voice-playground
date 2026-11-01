@@ -1,20 +1,29 @@
 import EventEmitter from 'events';
 import debug from 'debug';
 import { processInputAudioTrack, processOutputAudioTrack } from '../audio';
+import {
+  VoiceActivityDetector,
+  type VoiceActivityDetectorOptions,
+} from '@vpalmisano/webrtcperf-js';
 
 const log = debug('realtime:provider');
 
 export const DEFAULT_CONTEXT =
   'You help users answering questions. Be concise and limit the answer to a few sentences.';
 
+export type VadOptions = Omit<VoiceActivityDetectorOptions, 'track'>;
+
 export abstract class BaseProvider extends EventEmitter {
   public sourceAudioTrack: MediaStreamTrack | null = null;
   public outputAudioTrack: MediaStreamTrack | null = null;
+  public sourceAudioVad: VoiceActivityDetector | null = null;
+  public outputAudioVad: VoiceActivityDetector | null = null;
   public promptTokenCount = 0;
   public responseTokenCount = 0;
 
   protected running = false;
   protected mediaStream: MediaStream | null = null;
+  protected vadOptions?: VadOptions;
   private closeSourceAudio: () => void = () => {};
   private closeOutputAudio: () => void = () => {};
   private flushOutputAudio: () => void = () => {};
@@ -46,6 +55,9 @@ export abstract class BaseProvider extends EventEmitter {
     stringFormat = false,
     sampleRate = 16000,
   ) {
+    log(
+      `setupSourceAudio chunkMs=${chunkMs}, stringFormat=${stringFormat}, sampleRate=${sampleRate}`,
+    );
     if (!this.sourceAudioTrack) {
       await this.getMediaStream();
     }
@@ -60,13 +72,30 @@ export abstract class BaseProvider extends EventEmitter {
       stringFormat,
     );
     this.closeSourceAudio = closeSourceAudio;
+
+    if (this.vadOptions) {
+      this.sourceAudioVad = new VoiceActivityDetector({
+        track: this.sourceAudioTrack,
+        ...this.vadOptions,
+      });
+      await this.sourceAudioVad.start();
+    }
   }
 
   protected async setupOutputAudio(sampleRate: number, format: 'pcm' | 'mp3' = 'pcm') {
+    log(`setupOutputAudio sampleRate=${sampleRate}, format=${format}`);
     const { push, flush, track, close } = await processOutputAudioTrack(sampleRate, format);
     this.outputAudioTrack = track;
     this.closeOutputAudio = close;
     this.flushOutputAudio = flush;
+
+    if (this.vadOptions) {
+      this.outputAudioVad = new VoiceActivityDetector({
+        track: this.outputAudioTrack,
+        ...this.vadOptions,
+      });
+      await this.outputAudioVad.start();
+    }
     return { push, flush };
   }
 
@@ -85,6 +114,10 @@ export abstract class BaseProvider extends EventEmitter {
     } catch (error) {
       log('closeSession error: %o', error);
     }
+    this.sourceAudioVad?.stop(reason);
+    this.sourceAudioVad = null;
+    this.outputAudioVad?.stop(reason);
+    this.outputAudioVad = null;
     this.mediaStream?.getTracks().forEach(track => track.stop());
     this.closeSourceAudio();
     this.closeOutputAudio();

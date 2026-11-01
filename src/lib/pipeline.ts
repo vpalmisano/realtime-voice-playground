@@ -24,12 +24,19 @@ export class PipelineSession extends BaseProvider {
     try {
       await Promise.all([this.stt.start(), this.llm.start(), this.tts.start()]);
       this.sourceAudioTrack = this.stt.sourceAudioTrack;
+      this.sourceAudioVad = this.stt.sourceAudioVad;
       this.outputAudioTrack = this.tts.outputAudioTrack;
+      this.outputAudioVad = this.tts.outputAudioVad;
+
+      this.sourceAudioVad?.on('start', () => {
+        this.tts.flush();
+      });
+
       this.stt.on('text', text => {
         this.marker(Date.now(), 'lightgrey', 'STT text received');
-        this.tts.flush();
         this.llm.sendMessage(text);
       });
+
       this.llm.on('text', text => {
         this.marker(Date.now(), 'lightgrey', 'LLM text received');
         this.tts.sendMessage(text);

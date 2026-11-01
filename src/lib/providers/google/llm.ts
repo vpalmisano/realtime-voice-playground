@@ -1,6 +1,7 @@
 import { GoogleGenAI, type Content } from '@google/genai';
 import { DEFAULT_CONTEXT, BaseProvider } from '../base.ts';
 import debug from 'debug';
+import { TextAggregator, type LLMTextAggregation } from '../../text.ts';
 
 const log = debug('realtime:google-llm');
 
@@ -9,6 +10,7 @@ export type GoogleLLMOptions = {
   model?: string;
   context?: string;
   maxUserMessages?: number;
+  textAggregation?: LLMTextAggregation;
 };
 
 export const DEFAULT_MODEL = 'gemini-3.8-flash';
@@ -18,6 +20,7 @@ export class GoogleLLM extends BaseProvider {
   private readonly model: string;
   private readonly context: string;
   private readonly maxUserMessages: number;
+  private readonly textAggregator: TextAggregator;
   private readonly messages: Content[] = [];
   private abortController: AbortController | null = null;
 
@@ -27,6 +30,8 @@ export class GoogleLLM extends BaseProvider {
     this.model = options.model ?? DEFAULT_MODEL;
     this.context = options.context ?? DEFAULT_CONTEXT;
     this.maxUserMessages = options.maxUserMessages ?? 20;
+    this.textAggregator = new TextAggregator(options.textAggregation);
+    this.textAggregator.on('text', text => this.emit('text', text));
   }
 
   async start() {
@@ -35,7 +40,7 @@ export class GoogleLLM extends BaseProvider {
     }
     log('start model=%s', this.model);
     this.running = true;
-    this.notify(`Google LLM ready with model ${this.model}...\n`);
+    this.notify(`Google LLM ready with model ${this.model}\n`);
   }
 
   sendMessage(message: string): void {
@@ -78,6 +83,8 @@ export class GoogleLLM extends BaseProvider {
       for await (const chunk of stream) {
         if (chunk.text) {
           assistantText += chunk.text;
+
+          this.textAggregator.append(chunk.text);
         }
         const usage = chunk.usageMetadata;
         if (usage) {
@@ -94,8 +101,9 @@ export class GoogleLLM extends BaseProvider {
 
       if (assistantText) {
         this.messages.push({ role: 'model', parts: [{ text: assistantText }] });
-        this.emit('text', assistantText);
       }
+
+      this.textAggregator.flush();
     } catch (error) {
       if (abortController.signal.aborted) {
         log('generate aborted');
@@ -112,6 +120,7 @@ export class GoogleLLM extends BaseProvider {
 
   protected closeSession(reason?: string): void {
     log('closeSession %s', reason ?? '');
+    this.textAggregator.removeAllListeners();
     this.abortController?.abort();
     this.abortController = null;
     this.messages.splice(0, this.messages.length);

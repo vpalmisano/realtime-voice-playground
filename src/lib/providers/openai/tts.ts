@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
-import { BaseProvider } from '../base.ts';
+import { AwaitQueue, AwaitQueueRemovedTaskError, AwaitQueueStoppedError } from 'awaitqueue';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:openai-tts');
@@ -20,10 +21,11 @@ export class OpenAITTS extends BaseProvider {
   private readonly model: string;
   private readonly voice: string;
   private readonly instructions?: string;
+  private readonly asyncQueue = new AwaitQueue();
   private push: ((bytes: Uint8Array<ArrayBuffer>) => void) | null = null;
   private abortController: AbortController | null = null;
 
-  constructor(options: OpenAITTSOptions) {
+  constructor(options: OpenAITTSOptions, vadOptions?: VadOptions) {
     super();
     this.client = new OpenAI({
       apiKey: options.apiKey,
@@ -32,6 +34,7 @@ export class OpenAITTS extends BaseProvider {
     this.model = options.model ?? DEFAULT_MODEL;
     this.voice = options.voice ?? DEFAULT_VOICE;
     this.instructions = options.instructions;
+    this.vadOptions = vadOptions;
   }
 
   async start() {
@@ -50,6 +53,9 @@ export class OpenAITTS extends BaseProvider {
   flush(): void {
     this.abortController?.abort();
     this.abortController = null;
+    while (this.asyncQueue.size > 1) {
+      this.asyncQueue.remove(this.asyncQueue.size - 1);
+    }
     super.flush();
   }
 
@@ -61,12 +67,21 @@ export class OpenAITTS extends BaseProvider {
     if (!text) {
       return;
     }
-    void this.synthesize(text);
+    void this.asyncQueue
+      .push(() => this.synthesize(text))
+      .catch(error => {
+        if (
+          error instanceof AwaitQueueStoppedError ||
+          error instanceof AwaitQueueRemovedTaskError
+        ) {
+          return;
+        }
+        log('queue error: %o', error);
+      });
   }
 
   private async synthesize(text: string) {
     log('synthesize: "%s"', text);
-    this.abortController?.abort();
     const abortController = new AbortController();
     this.abortController = abortController;
 
@@ -116,6 +131,7 @@ export class OpenAITTS extends BaseProvider {
     log('closeSession %s', reason ?? '');
     this.abortController?.abort();
     this.abortController = null;
+    this.asyncQueue.stop();
     this.push = null;
   }
 }

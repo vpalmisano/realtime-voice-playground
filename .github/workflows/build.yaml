@@ -11,6 +11,8 @@ on:
       - 'src/*'
       - '*.json'
       - '*.js'
+      - '*.html'
+      - 'public/*'
       - 'package-lock.json'
 
 permissions:

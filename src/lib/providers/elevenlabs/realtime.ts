@@ -1,6 +1,6 @@
 import { OpenAIRealtimeWebSocket, RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
 import { type TurnDetection } from '../openai/realtime.ts';
-import { DEFAULT_CONTEXT, BaseProvider } from '../base.ts';
+import { DEFAULT_CONTEXT, BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:elevenlabs');
@@ -104,7 +104,7 @@ export class ElevenLabsRealtime extends BaseProvider {
 
   private session: RealtimeSession | null = null;
 
-  constructor(options: ElevenLabsRealtimeOptions) {
+  constructor(options: ElevenLabsRealtimeOptions, vadOptions?: VadOptions) {
     super();
     this.model = options.model ?? DEFAULT_MODEL;
     this.voice = options.voice ?? DEFAULT_VOICE;
@@ -115,6 +115,7 @@ export class ElevenLabsRealtime extends BaseProvider {
       eagerness: 'medium',
     };
     this.chunkMs = options.chunkMs ?? 80;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

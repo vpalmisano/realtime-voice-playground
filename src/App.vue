@@ -14,6 +14,7 @@ import PipelineSettings from './PipelineSettings.vue';
 import MessagesLog, { appendMessage, setStartTime, startTime } from './MessagesLog.vue';
 import PerfSettings, {
   applyPerfConnectSettings,
+  getVadOptions,
   maybeDownloadResponseAudio,
   maybeSaveResponseAudio,
   startEstimateQuestionAnswerDelay,
@@ -75,13 +76,13 @@ async function onConnect() {
 
     switch (provider.value) {
       case 'OpenAI Realtime':
-        session = new OpenAIRealtime(getOpenaiOptions());
+        session = new OpenAIRealtime(getOpenaiOptions(), getVadOptions());
         break;
       case 'Google Realtime':
-        session = new GoogleAIRealtime(getGoogleOptions());
+        session = new GoogleAIRealtime(getGoogleOptions(), getVadOptions());
         break;
       case 'ElevenLabs Realtime':
-        session = new ElevenLabsRealtime(getElevenLabsOptions());
+        session = new ElevenLabsRealtime(getElevenLabsOptions(), getVadOptions());
         break;
       default: {
         session = new PipelineSession(getSttProvider(), getLlmProvider(), getTtsProvider());
@@ -113,7 +114,11 @@ async function onConnect() {
     outputStream.value = new MediaStream([session.outputAudioTrack]);
 
     await maybeSaveResponseAudio(session.outputAudioTrack);
-    await startEstimateQuestionAnswerDelay(session.sourceAudioTrack, session.outputAudioTrack);
+
+    if (!session.sourceAudioVad || !session.outputAudioVad) {
+      throw new Error('Failed to get voice activity detectors');
+    }
+    await startEstimateQuestionAnswerDelay(session.sourceAudioVad, session.outputAudioVad);
 
     await appendMessage(`Connected in ${Math.round(performance.now() - startTime)}ms\n`);
     connected.value = true;
