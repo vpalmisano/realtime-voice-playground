@@ -1,4 +1,4 @@
-# realtime-voice-playground
+# Realtime Voice Playground
 
 [Live demo](https://vpalmisano.github.io/realtime-voice-playground/)
 
