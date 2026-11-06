@@ -1,6 +1,18 @@
+---
+title: Realtime Voice Playground
+emoji: 🎙️
+colorFrom: blue
+colorTo: indigo
+sdk: static
+app_build_command: npm run build
+app_file: dist/index.html
+pinned: false
+short_description: Interactive playground for realtime voice AI providers and custom STT→LLM→TTS pipelines
+---
+
 # Realtime Voice Playground
 
-[Live demo](https://vpalmisano.github.io/realtime-voice-playground/)
+[Live demo](https://vpalmisano.github.io/realtime-voice-playground/) · [Hugging Face Space](https://huggingface.co/spaces/vpalmisano/realtime-voice-playground)
 
 An interactive webapp for trying voice AI — either **end-to-end realtime** models (OpenAI, Google, ElevenLabs) or a **custom STT → LLM → TTS pipeline** with different providers.
 Configure options, chat by text or mic, and optionally run scripted Q&A with [webrtcperf-js](https://github.com/vpalmisano/webrtcperf-js).
