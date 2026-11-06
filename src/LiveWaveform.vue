@@ -36,20 +36,27 @@ type Marker = { x: number; color: string; label?: string };
 
 const markers: Marker[] = [];
 const MARKER_HIT_PX = 8;
+const CLICK_DRAG_THRESHOLD_PX = 4;
 
 const markerTooltip = ref<{
   show: boolean;
+  pinned: boolean;
   left: number;
   top: number;
   label: string;
   color: string;
+  markerX: number | null;
 }>({
   show: false,
+  pinned: false,
   left: 0,
   top: 0,
   label: '',
   color: '#FFC107',
+  markerX: null,
 });
+
+let pointerDownPos: { x: number; y: number } | null = null;
 
 function findNearestMarker(chart: Chart<'line'>, pixelX: number): Marker | null {
   const xScale = chart.scales.x;
@@ -70,11 +77,74 @@ function findNearestMarker(chart: Chart<'line'>, pixelX: number): Marker | null 
   return best;
 }
 
-function hideMarkerTooltip() {
-  markerTooltip.value.show = false;
+function showMarkerTooltip(chart: Chart<'line'>, marker: Marker, pinned: boolean) {
+  const xScale = chart.scales.x;
+  const chartArea = chart.chartArea;
+  if (!xScale || !chartArea) return;
+
+  const left = Math.min(
+    Math.max(xScale.getPixelForValue(marker.x), chartArea.left + 12),
+    chartArea.right - 12,
+  );
+  const top = chartArea.top + 8;
+  const text = marker.label?.trim();
+  const label = text ? `${text}\n${formatTime(marker.x, true)}` : formatTime(marker.x, true);
+  const cur = markerTooltip.value;
+  if (
+    cur.show &&
+    cur.pinned === pinned &&
+    cur.left === left &&
+    cur.top === top &&
+    cur.label === label &&
+    cur.color === marker.color &&
+    cur.markerX === marker.x
+  ) {
+    return;
+  }
+  markerTooltip.value = {
+    show: true,
+    pinned,
+    left,
+    top,
+    label,
+    color: marker.color,
+    markerX: marker.x,
+  };
+}
+
+function hideMarkerTooltip(force = false) {
+  if (markerTooltip.value.pinned && !force) return;
+  markerTooltip.value = {
+    show: false,
+    pinned: false,
+    left: 0,
+    top: 0,
+    label: '',
+    color: '#FFC107',
+    markerX: null,
+  };
+}
+
+function repositionPinnedTooltip(chart: Chart<'line'>) {
+  if (!markerTooltip.value.pinned || markerTooltip.value.markerX == null) return;
+  const marker = markers.find(m => m.x === markerTooltip.value.markerX);
+  if (!marker) {
+    hideMarkerTooltip(true);
+    return;
+  }
+  const xScale = chart.scales.x;
+  if (!xScale) return;
+  const windowStart = Number(xScale.min);
+  const windowEnd = Number(xScale.max);
+  if (marker.x < windowStart || marker.x > windowEnd) {
+    hideMarkerTooltip(true);
+    return;
+  }
+  showMarkerTooltip(chart, marker, true);
 }
 
 function onChartHover(event: MouseEvent | null, chart: Chart<'line'>) {
+  if (markerTooltip.value.pinned) return;
   if (!event || !canvasEl.value) {
     hideMarkerTooltip();
     return;
@@ -86,21 +156,46 @@ function onChartHover(event: MouseEvent | null, chart: Chart<'line'>) {
     hideMarkerTooltip();
     return;
   }
+  showMarkerTooltip(chart, marker, false);
+}
 
-  const xScale = chart.scales.x;
-  const chartArea = chart.chartArea;
-  const x = Math.min(
-    Math.max(xScale.getPixelForValue(marker.x), chartArea.left + 12),
-    chartArea.right - 12,
-  );
-  const text = marker.label?.trim();
-  markerTooltip.value = {
-    show: true,
-    left: x,
-    top: chartArea.top + 8,
-    label: text ? `${text}\n${formatTime(marker.x, true)}` : formatTime(marker.x, true),
-    color: marker.color,
-  };
+function wasPointerDrag(event: MouseEvent): boolean {
+  if (!pointerDownPos) return false;
+  const dx = event.clientX - pointerDownPos.x;
+  const dy = event.clientY - pointerDownPos.y;
+  return Math.hypot(dx, dy) > CLICK_DRAG_THRESHOLD_PX;
+}
+
+function onChartClick(event: MouseEvent | null, chart: Chart<'line'>) {
+  if (!event || !canvasEl.value || wasPointerDrag(event)) {
+    pointerDownPos = null;
+    return;
+  }
+  pointerDownPos = null;
+
+  const rect = canvasEl.value.getBoundingClientRect();
+  const pixelX = event.clientX - rect.left;
+  const marker = findNearestMarker(chart, pixelX);
+  if (!marker) {
+    hideMarkerTooltip(true);
+    return;
+  }
+
+  if (markerTooltip.value.pinned && markerTooltip.value.markerX === marker.x) {
+    hideMarkerTooltip(true);
+    return;
+  }
+  showMarkerTooltip(chart, marker, true);
+}
+
+function onCanvasPointerDown(event: PointerEvent) {
+  pointerDownPos = { x: event.clientX, y: event.clientY };
+}
+
+function onMarkerTooltipKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && markerTooltip.value.pinned) {
+    hideMarkerTooltip(true);
+  }
 }
 
 const markersPlugin: Plugin<'line'> = {
@@ -126,6 +221,8 @@ const markersPlugin: Plugin<'line'> = {
       ctx.stroke();
     }
     ctx.restore();
+
+    repositionPinnedTooltip(chart as Chart<'line'>);
   },
 };
 
@@ -410,6 +507,9 @@ function createChart() {
       onHover: (event, _elements, chartInstance) => {
         onChartHover(event.native as MouseEvent | null, chartInstance as Chart<'line'>);
       },
+      onClick: (event, _elements, chartInstance) => {
+        onChartClick(event.native as MouseEvent | null, chartInstance as Chart<'line'>);
+      },
       plugins: {
         legend: {
           display: true,
@@ -569,7 +669,7 @@ function stop() {
 
 function clearMarkers() {
   markers.length = 0;
-  hideMarkerTooltip();
+  hideMarkerTooltip(true);
 }
 
 function addMarker(x: number, color = '#FFC107', label?: string) {
@@ -660,9 +760,11 @@ watch(
 onMounted(() => {
   createChart();
   if (props.inputMedia || props.outputMedia) start();
+  window.addEventListener('keydown', onMarkerTooltipKeydown);
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onMarkerTooltipKeydown);
   stop();
   clear();
   chart?.destroy();
@@ -677,10 +779,11 @@ onBeforeUnmount(() => {
       :class="{ 'is-zoomed': isZoomed }"
       :style="{ height: `${height}px`, background: BG }"
     >
-      <canvas ref="canvasEl" @mouseleave="hideMarkerTooltip" />
+      <canvas ref="canvasEl" @pointerdown="onCanvasPointerDown" @mouseleave="hideMarkerTooltip()" />
       <div
         v-if="markerTooltip.show"
         class="marker-tooltip"
+        :class="{ 'is-pinned': markerTooltip.pinned }"
         :style="{
           left: `${markerTooltip.left}px`,
           top: `${markerTooltip.top}px`,
@@ -771,5 +874,9 @@ onBeforeUnmount(() => {
   line-height: 1.35;
   white-space: pre-line;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.marker-tooltip.is-pinned {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
 }
 </style>
