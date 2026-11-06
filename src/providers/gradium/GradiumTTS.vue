@@ -71,6 +71,18 @@ onMounted(() => {
 
 <template>
   <v-row>
+    <v-col cols="12">
+      <v-alert type="info" variant="tonal" density="comfortable" class="mb-0">
+        Gradium TTS requires a browser CORS extension. Install and enable
+        <a
+          href="https://mybrowseraddon.com/access-control-allow-origin.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Access-Control-Allow-Origin</a
+        >
+        to use this provider.
+      </v-alert>
+    </v-col>
     <v-col cols="12" md="6" lg="4">
       <v-text-field
         v-model="apiKey"

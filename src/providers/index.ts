@@ -13,6 +13,8 @@ import { getOptions as getOpenaiTTSOptions } from './openai/OpenaiTTS.vue';
 import { getOptions as getOpenaiLLMOptions } from './openai/OpenaiLLM.vue';
 import { getOptions as getSpeechifyTTSOptions } from './speechify/SpeechifyTTS.vue';
 import { getOptions as getCartesiaTTSOptions } from './cartesia/CartesiaTTS.vue';
+import { getOptions as getGradiumSTTOptions } from './gradium/GradiumSTT.vue';
+import { getOptions as getGradiumTTSOptions } from './gradium/GradiumTTS.vue';
 import { ElevenLabsSTT } from '../lib/providers/elevenlabs/stt.ts';
 import { ElevenLabsTTS } from '../lib/providers/elevenlabs/tts.ts';
 import { GoogleSTT } from '../lib/providers/google/stt.ts';
@@ -25,6 +27,8 @@ import { SpeechifyTTS } from '../lib/providers/speechify/tts.ts';
 import { CartesiaTTS } from '../lib/providers/cartesia/tts.ts';
 import type { BaseProvider } from '../lib/providers/base.ts';
 import { getVadOptions } from '../PerfSettings.vue';
+import { GradiumSTT } from '../lib/providers/gradium/stt.ts';
+import { GradiumTTS } from '../lib/providers/gradium/tts.ts';
 
 export function getSttProvider(): BaseProvider {
   const vadOptions = getVadOptions();
@@ -35,6 +39,8 @@ export function getSttProvider(): BaseProvider {
       return new OpenAISTT(getOpenaiSTTOptions(), vadOptions);
     case 'ElevenLabs':
       return new ElevenLabsSTT(getElevenLabsSTTOptions(), vadOptions);
+    case 'Gradium':
+      return new GradiumSTT(getGradiumSTTOptions(), vadOptions);
     default:
       throw new Error('Invalid STT provider');
   }
@@ -64,6 +70,8 @@ export function getTtsProvider(): BaseProvider {
       return new CartesiaTTS(getCartesiaTTSOptions(), vadOptions);
     case 'ElevenLabs':
       return new ElevenLabsTTS(getElevenLabsTTSOptions(), vadOptions);
+    case 'Gradium':
+      return new GradiumTTS(getGradiumTTSOptions(), vadOptions);
     default:
       throw new Error('Invalid TTS provider');
   }

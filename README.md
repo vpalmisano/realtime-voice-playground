@@ -13,10 +13,10 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
   - **OpenAI / Google / ElevenLabs Realtime** — single-provider voice-to-voice sessions
   - **Custom** — compose a pipeline from separate STT, LLM, and TTS providers
 - **Custom pipeline providers**:
-  - **STT**: ElevenLabs, Google, OpenAI
+  - **STT**: ElevenLabs, Google, Gradium, OpenAI
   - **LLM**: Google, OpenAI
-  - **TTS**: Cartesia, ElevenLabs, Google, OpenAI, Speechify
-- **Transports**: WebSocket or WebRTC (OpenAI Realtime); WebSocket (Google, ElevenLabs)
+  - **TTS**: Cartesia, ElevenLabs, Google, Gradium, OpenAI, Speechify
+- **Transports**: WebSocket or WebRTC (OpenAI Realtime); WebSocket (Google, ElevenLabs, Gradium)
 - **Session options**: model, voice, transcription, turn detection, and system instructions
 - **Chat**: send text messages or speak via the microphone
 - **Live waveform**: input/output audio visualization while connected
@@ -35,6 +35,7 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 | OpenAI     | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)               | Realtime, STT, LLM, and/or TTS              |
 | Google     | [aistudio.google.com/apikey](https://aistudio.google.com/apikey)                   | Gemini Live, STT, LLM, and/or TTS           |
 | ElevenLabs | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) | Realtime needs `convai_write`; also STT/TTS |
+| Gradium    | [gradium.ai](https://gradium.ai)                                                   | STT/TTS (Custom pipeline)                   |
 | Cartesia   | [cartesia.ai](https://cartesia.ai)                                                 | TTS (Custom pipeline)                       |
 | Speechify  | [console.sws.speechify.com](https://console.sws.speechify.com)                     | TTS (Custom pipeline)                       |
 
@@ -64,11 +65,13 @@ With fake audio enabled and connected, click a prompt under **Audio inputs** to 
 
 Pick a provider for each stage in the stepper. Audio is transcribed by STT, text goes to the LLM, and the LLM reply is spoken by TTS.
 
-| Stage | Providers                                       | Typical defaults                               |
-| ----- | ----------------------------------------------- | ---------------------------------------------- |
-| STT   | ElevenLabs, Google, OpenAI                      | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
-| LLM   | Google, OpenAI                                  | e.g. `gpt-5.4`, `gemini-3.8-flash`             |
-| TTS   | Cartesia, ElevenLabs, Google, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
+| Stage | Providers                                                | Typical defaults                               |
+| ----- | -------------------------------------------------------- | ---------------------------------------------- |
+| STT   | ElevenLabs, Google, Gradium, OpenAI                      | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
+| LLM   | Google, OpenAI                                           | e.g. `gpt-5.4`, `gemini-3.8-flash`             |
+| TTS   | Cartesia, ElevenLabs, Google, Gradium, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
+
+Gradium STT/TTS use WebSocket via [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk). Because Gradium’s token endpoint does not return CORS headers on the preflight, install and enable the [Access-Control-Allow-Origin](https://mybrowseraddon.com/access-control-allow-origin.html) browser extension before connecting.
 
 Each stage has its own API key and model/voice fields. Keys and options are stored separately per provider.
 
@@ -122,5 +125,6 @@ The API key needs the **`convai_write`** permission (enable Conversational AI wr
 - [`@google/genai`](https://github.com/googleapis/js-genai) Gemini Live, STT, LLM, TTS
 - [`@elevenlabs/elevenlabs-js`](https://github.com/elevenlabs/elevenlabs-js) / [`@elevenlabs/client`](https://github.com/elevenlabs/elevenlabs-js) ElevenLabs Realtime, STT, TTS
 - [`@cartesia/cartesia-js`](https://github.com/cartesia-ai/cartesia-js) Cartesia TTS
+- [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk) Gradium STT / TTS
 - [`@speechify/api`](https://docs.sws.speechify.com) Speechify TTS
 - [`@vpalmisano/webrtcperf-js`](https://github.com/vpalmisano/webrtcperf-js) for fake media, Q&A turns, and plots

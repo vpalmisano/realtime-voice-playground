@@ -1,5 +1,5 @@
 import { GradiumClient, type SttRealtime } from '@gradium/sdk';
-import { BaseProvider } from '../base.ts';
+import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
 
 const log = debug('realtime:gradium-stt');
@@ -37,7 +37,7 @@ export class GradiumSTT extends BaseProvider {
   private flushId = 0;
   private flushing = false;
 
-  constructor(options: GradiumSTTOptions) {
+  constructor(options: GradiumSTTOptions, vadOptions?: VadOptions) {
     super();
     this.client = new GradiumClient({ apiKey: options.apiKey });
     this.model = options.model ?? DEFAULT_MODEL;
@@ -46,6 +46,7 @@ export class GradiumSTT extends BaseProvider {
     this.vadThreshold = options.vadThreshold ?? DEFAULT_VAD_THRESHOLD;
     this.vadConsecutiveSteps = options.vadConsecutiveSteps ?? DEFAULT_VAD_CONSECUTIVE_STEPS;
     this.chunkMs = options.chunkMs ?? 80;
+    this.vadOptions = vadOptions;
   }
 
   async start() {

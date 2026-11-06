@@ -40,7 +40,7 @@ export class GoogleSTT extends BaseProvider {
     this.notify(`Connecting to Google STT with model ${this.model} (${this.mode})...\n`);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: this.apiKey });
+      const ai = new GoogleGenAI({ apiKey: this.apiKey, apiVersion: 'v1beta' });
       this.session = await ai.live.connect({
         model: this.model,
         config: {

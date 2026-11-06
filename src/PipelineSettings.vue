@@ -1,9 +1,16 @@
 <script lang="ts">
 import { defineReference } from './utils';
 
-const STT_PROVIDERS = ['ElevenLabs', 'Google', 'OpenAI'] as const;
+const STT_PROVIDERS = ['ElevenLabs', 'Google', 'Gradium', 'OpenAI'] as const;
 const LLM_PROVIDERS = ['Google', 'OpenAI'] as const;
-const TTS_PROVIDERS = ['Cartesia', 'ElevenLabs', 'Google', 'OpenAI', 'Speechify'] as const;
+const TTS_PROVIDERS = [
+  'Cartesia',
+  'ElevenLabs',
+  'Google',
+  'Gradium',
+  'OpenAI',
+  'Speechify',
+] as const;
 
 const sttProvider = defineReference('Pipeline:SttProvider', 'ElevenLabs', STT_PROVIDERS);
 const llmProvider = defineReference('Pipeline:LlmProvider', 'OpenAI', LLM_PROVIDERS);
@@ -105,7 +112,7 @@ const step = ref('1');
         <OpenaiTTSSettings v-else-if="ttsProvider === 'OpenAI'" />
         <SpeechifyTTSSettings v-else-if="ttsProvider === 'Speechify'" />
         <CartesiaTTSSettings v-else-if="ttsProvider === 'Cartesia'" />
-        <GradiumTTSSettings v-else />
+        <GradiumTTSSettings v-else-if="ttsProvider === 'Gradium'" />
       </v-stepper-window-item>
     </v-stepper-window>
   </v-stepper>

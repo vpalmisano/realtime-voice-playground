@@ -106,7 +106,7 @@ async function getGoogleModels(apiKey: string): Promise<Model[]> {
     return cached.models;
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
   const pager = await ai.models.list();
   const models: Model[] = [];
   for await (const model of pager) {

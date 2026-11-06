@@ -25,7 +25,7 @@ export class GoogleTTS extends BaseProvider {
 
   constructor(options: GoogleTTSOptions, vadOptions?: VadOptions) {
     super();
-    this.client = new GoogleGenAI({ apiKey: options.apiKey });
+    this.client = new GoogleGenAI({ apiKey: options.apiKey, apiVersion: 'v1beta' });
     this.model = options.model ?? DEFAULT_MODEL;
     this.voice = options.voice ?? DEFAULT_VOICE;
     this.vadOptions = vadOptions;

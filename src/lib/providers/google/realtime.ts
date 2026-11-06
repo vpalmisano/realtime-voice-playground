@@ -46,7 +46,7 @@ export class GoogleAIRealtime extends BaseProvider {
       const { push, flush } = await this.setupOutputAudio(24000);
       const pushAudio = push as (chunk: string) => void;
 
-      const ai = new GoogleGenAI({ apiKey: this.apiKey });
+      const ai = new GoogleGenAI({ apiKey: this.apiKey, apiVersion: 'v1beta' });
 
       const config = {
         responseModalities: [Modality.AUDIO],
