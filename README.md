@@ -7,7 +7,7 @@ sdk: static
 app_build_command: npm run build
 app_file: dist/index.html
 pinned: false
-short_description: Interactive playground for realtime voice AI providers and custom STT→LLM→TTS pipelines
+short_description: Playground for realtime voice AI and STT→LLM→TTS
 ---
 
 # Realtime Voice Playground
