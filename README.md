@@ -1,15 +1,3 @@
----
-title: Realtime Voice Playground
-emoji: 🎙️
-colorFrom: blue
-colorTo: indigo
-sdk: static
-app_build_command: npm run build
-app_file: dist/index.html
-pinned: false
-short_description: Playground for realtime voice AI and STT→LLM→TTS
----
-
 # Realtime Voice Playground
 
 [Live demo](https://vpalmisano.github.io/realtime-voice-playground/) · [Hugging Face Space](https://huggingface.co/spaces/vpalmisano/realtime-voice-playground)
