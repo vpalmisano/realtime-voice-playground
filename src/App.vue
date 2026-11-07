@@ -10,7 +10,11 @@ import GoogleSettings, {
 import ElevenLabsSettings, {
   getOptions as getElevenLabsOptions,
 } from './providers/elevenlabs/ElevenLabsRealtime.vue';
-import PipelineSettings from './PipelineSettings.vue';
+import PipelineSettings, {
+  getLlmProvider as getLlmProviderName,
+  getSttProvider as getSttProviderName,
+  getTtsProvider as getTtsProviderName,
+} from './PipelineSettings.vue';
 import MessagesLog, { appendMessage, setStartTime, startTime } from './MessagesLog.vue';
 import PerfSettings, {
   applyPerfConnectSettings,
@@ -48,6 +52,17 @@ const clearStorageDialog = ref(false);
 const inputStream = ref<MediaStream | null>(null);
 const outputStream = ref<MediaStream | null>(null);
 const provider = defineReference('provider', 'OpenAI Realtime', PROVIDERS);
+
+const pipelineStages = computed(() => {
+  if (provider.value === 'Custom') {
+    return [
+      { role: 'STT', name: getSttProviderName() },
+      { role: 'LLM', name: getLlmProviderName() },
+      { role: 'TTS', name: getTtsProviderName() },
+    ];
+  }
+  return [{ role: 'Speech-to-Speech', name: provider.value }];
+});
 
 const settingsComponent = computed(() => {
   switch (provider.value) {
@@ -238,7 +253,7 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
         </v-toolbar>
 
         <v-row>
-          <v-col cols="12" md="6" lg="4">
+          <v-col cols="12" md="6" lg="4" v-if="!connected">
             <v-select
               v-model="provider"
               :items="[...PROVIDERS]"
@@ -246,7 +261,6 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
               variant="outlined"
               density="comfortable"
               hide-details
-              :disabled="connected"
             />
           </v-col>
           <v-col cols="12" md="6" lg="4">
@@ -273,9 +287,30 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
           </v-card>
         </v-dialog>
 
-        <div class="d-flex flex-column ga-4 my-4" v-if="!connected">
-          <v-card variant="elevated">
+        <div class="d-flex flex-column ga-4 my-4">
+          <v-card variant="elevated" v-if="!connected">
             <component :is="settingsComponent" />
+          </v-card>
+          <v-card v-else variant="elevated">
+            <v-card-text class="pa-2">
+              <v-timeline
+                direction="horizontal"
+                density="compact"
+                side="end"
+                truncate-line="both"
+                size="small"
+              >
+                <v-timeline-item
+                  v-for="stage in pipelineStages"
+                  :key="`${stage.role}-${stage.name}`"
+                  size="small"
+                  dot-color="primary"
+                >
+                  <div class="text-caption text-medium-emphasis">{{ stage.role }}</div>
+                  <div class="text-body-2 font-weight-medium">{{ stage.name }}</div>
+                </v-timeline-item>
+              </v-timeline>
+            </v-card-text>
           </v-card>
         </div>
 
