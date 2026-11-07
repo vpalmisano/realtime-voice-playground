@@ -53,7 +53,7 @@ export class ElevenLabsTTS extends BaseProvider {
     try {
       const token = await createEphemeralClientSecret(this.apiKey);
       const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE);
-      this.push = push as (chunk: string) => void;
+      this.push = push;
 
       const params = new URLSearchParams({
         model_id: this.modelId,

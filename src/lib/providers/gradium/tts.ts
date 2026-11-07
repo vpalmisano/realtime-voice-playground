@@ -1,7 +1,6 @@
 import { GradiumClient } from '@gradium/sdk';
 import { AwaitQueue, AwaitQueueRemovedTaskError, AwaitQueueStoppedError } from 'awaitqueue';
 import { BaseProvider, type VadOptions } from '../base.ts';
-import { bytesToBinaryString } from './utils.ts';
 import debug from 'debug';
 
 const log = debug('realtime:gradium-tts');
@@ -22,7 +21,7 @@ export class GradiumTTS extends BaseProvider {
   private readonly model: string;
   private readonly voiceId: string;
   private readonly asyncQueue = new AwaitQueue();
-  private push: ((chunk: string) => void) | null = null;
+  private push: ((chunk: Uint8Array) => void) | null = null;
   private abortController: AbortController | null = null;
 
   constructor(options: GradiumTTSOptions, vadOptions?: VadOptions) {
@@ -43,7 +42,7 @@ export class GradiumTTS extends BaseProvider {
     this.notify(`Gradium TTS ready with model ${this.model}, voice ${this.voiceId}...\n`);
 
     const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE);
-    this.push = push as (chunk: string) => void;
+    this.push = push;
   }
 
   flush(): void {
@@ -98,7 +97,7 @@ export class GradiumTTS extends BaseProvider {
           break;
         }
         if (chunk.length) {
-          this.push?.(bytesToBinaryString(chunk));
+          this.push?.(chunk);
         }
       }
     } catch (error) {

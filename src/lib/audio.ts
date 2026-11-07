@@ -83,51 +83,78 @@ export async function processInputAudioTrack(
   return { close: track.stop };
 }
 
-export async function processOutputAudioTrack(sampleRate = 24000, format: 'pcm' | 'mp3' = 'pcm') {
-  if (format === 'pcm') {
-    const audioContext = new AudioContext({
-      sampleRate,
-      latencyHint: 'interactive',
-    });
-    if (audioContext.state === 'suspended') {
-      await audioContext.resume();
-    }
+type OutputAudioTrack<TPush> = {
+  push: (chunk: TPush) => void;
+  flush: () => void;
+  track: MediaStreamTrack;
+  close: () => void;
+};
 
-    await audioContext.audioWorklet.addModule(workletModuleUrl(pcm16PlaybackProcessorCode));
-    const worklet = new AudioWorkletNode(audioContext, 'pcm16-playback-processor', {
-      numberOfInputs: 0,
-      numberOfOutputs: 1,
-      outputChannelCount: [1],
-    });
-
-    const destination = audioContext.createMediaStreamDestination();
-    const outputAudioTrack = destination.stream.getAudioTracks()[0];
-    if (!outputAudioTrack) {
-      throw new Error('Failed to create output audio track');
-    }
-
-    worklet.connect(audioContext.destination);
-    worklet.connect(destination);
-
-    return {
-      push: (chunk: string) => {
-        if (!chunk.length) {
-          return;
-        }
-        worklet.port.postMessage({ type: 'pcm', binary: chunk });
-      },
-      flush: () => worklet.port.postMessage({ type: 'flush' }),
-      track: outputAudioTrack,
-      close: () => {
-        worklet.port.postMessage({ type: 'flush' });
-        worklet.disconnect();
-        void audioContext.close().catch(() => {});
-        outputAudioTrack.stop();
-      },
-    };
+export async function processOutputAudioTrackPcm(
+  sampleRate?: number,
+  format?: 'i16',
+): Promise<OutputAudioTrack<string | Uint8Array>>;
+export async function processOutputAudioTrackPcm(
+  sampleRate: number,
+  format: 'f32',
+): Promise<OutputAudioTrack<Float32Array>>;
+export async function processOutputAudioTrackPcm(
+  sampleRate = 24000,
+  format: 'f32' | 'i16' = 'i16',
+): Promise<OutputAudioTrack<string | Float32Array | Uint8Array>> {
+  if (!['f32', 'i16'].includes(format)) {
+    throw new Error(`Invalid format: ${format}`);
   }
 
-  // Encoded formats.
+  const audioContext = new AudioContext({
+    sampleRate,
+    latencyHint: 'interactive',
+  });
+  if (audioContext.state === 'suspended') {
+    await audioContext.resume();
+  }
+
+  await audioContext.audioWorklet.addModule(workletModuleUrl(pcm16PlaybackProcessorCode));
+  const worklet = new AudioWorkletNode(audioContext, 'pcm16-playback-processor', {
+    numberOfInputs: 0,
+    numberOfOutputs: 1,
+    outputChannelCount: [1],
+    processorOptions: { format },
+  });
+
+  const destination = audioContext.createMediaStreamDestination();
+  const outputAudioTrack = destination.stream.getAudioTracks()[0];
+  if (!outputAudioTrack) {
+    throw new Error('Failed to create output audio track');
+  }
+
+  worklet.connect(audioContext.destination);
+  worklet.connect(destination);
+
+  return {
+    push: (chunk: string | Float32Array | Uint8Array) => {
+      if (!chunk.length) {
+        return;
+      }
+      if (chunk instanceof Float32Array || chunk instanceof Uint8Array) {
+        const samples = chunk.slice();
+        worklet.port.postMessage({ audio: samples }, [samples.buffer]);
+        return;
+      }
+      worklet.port.postMessage({ audio: chunk });
+    },
+    flush: () => worklet.port.postMessage({ type: 'flush' }),
+    track: outputAudioTrack,
+    close: () => {
+      worklet.port.postMessage({ type: 'flush' });
+      worklet.disconnect();
+      void audioContext.close().catch(() => {});
+      outputAudioTrack.stop();
+    },
+  };
+}
+
+export async function processOutputAudioTrackMp3(sampleRate = 24000) {
   if (!MediaSource.isTypeSupported('audio/mpeg')) {
     throw new Error('MediaSource does not support audio/mpeg');
   }

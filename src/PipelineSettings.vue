@@ -8,6 +8,7 @@ const TTS_PROVIDERS = [
   'ElevenLabs',
   'Google',
   'Gradium',
+  'Gradium Phonon',
   'OpenAI',
   'Speechify',
 ] as const;
@@ -43,6 +44,7 @@ import OpenaiTTSSettings from './providers/openai/OpenaiTTS.vue';
 import SpeechifyTTSSettings from './providers/speechify/SpeechifyTTS.vue';
 import CartesiaTTSSettings from './providers/cartesia/CartesiaTTS.vue';
 import GradiumTTSSettings from './providers/gradium/GradiumTTS.vue';
+import GradiumPhononTTSSettings from './providers/gradium/GradiumPhononTTS.vue';
 
 const step = ref('1');
 </script>
@@ -113,6 +115,7 @@ const step = ref('1');
         <SpeechifyTTSSettings v-else-if="ttsProvider === 'Speechify'" />
         <CartesiaTTSSettings v-else-if="ttsProvider === 'Cartesia'" />
         <GradiumTTSSettings v-else-if="ttsProvider === 'Gradium'" />
+        <GradiumPhononTTSSettings v-else-if="ttsProvider === 'Gradium Phonon'" />
       </v-stepper-window-item>
     </v-stepper-window>
   </v-stepper>

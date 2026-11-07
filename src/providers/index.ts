@@ -15,6 +15,7 @@ import { getOptions as getSpeechifyTTSOptions } from './speechify/SpeechifyTTS.v
 import { getOptions as getCartesiaTTSOptions } from './cartesia/CartesiaTTS.vue';
 import { getOptions as getGradiumSTTOptions } from './gradium/GradiumSTT.vue';
 import { getOptions as getGradiumTTSOptions } from './gradium/GradiumTTS.vue';
+import { getOptions as getGradiumPhononTTSOptions } from './gradium/GradiumPhononTTS.vue';
 import { ElevenLabsSTT } from '../lib/providers/elevenlabs/stt.ts';
 import { ElevenLabsTTS } from '../lib/providers/elevenlabs/tts.ts';
 import { GoogleSTT } from '../lib/providers/google/stt.ts';
@@ -29,6 +30,7 @@ import type { BaseProvider } from '../lib/providers/base.ts';
 import { getVadOptions } from '../PerfSettings.vue';
 import { GradiumSTT } from '../lib/providers/gradium/stt.ts';
 import { GradiumTTS } from '../lib/providers/gradium/tts.ts';
+import { GradiumPhononTTS } from '../lib/providers/gradium/phonon-tts.ts';
 
 export function getSttProvider(): BaseProvider {
   const vadOptions = getVadOptions();
@@ -72,6 +74,8 @@ export function getTtsProvider(): BaseProvider {
       return new ElevenLabsTTS(getElevenLabsTTSOptions(), vadOptions);
     case 'Gradium':
       return new GradiumTTS(getGradiumTTSOptions(), vadOptions);
+    case 'Gradium Phonon':
+      return new GradiumPhononTTS(getGradiumPhononTTSOptions(), vadOptions);
     default:
       throw new Error('Invalid TTS provider');
   }

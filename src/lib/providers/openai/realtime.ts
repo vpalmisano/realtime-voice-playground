@@ -180,11 +180,8 @@ export class OpenAIRealtime extends BaseProvider {
           this.session?.sendAudio(pcm16 as ArrayBuffer);
         });
         const { push, flush } = await this.setupOutputAudio(24000);
-        const pushAudio = push as (chunk: string) => void;
 
-        this.session.transport.on('response.output_audio.delta', event =>
-          pushAudio(atob(event.delta)),
-        );
+        this.session.transport.on('response.output_audio.delta', event => push(atob(event.delta)));
         this.session.transport.on('conversation.item.truncated', () => flush());
         this.session.transport.on('input_audio_buffer.speech_started', () => flush());
       } else {

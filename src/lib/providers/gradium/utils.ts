@@ -51,12 +51,3 @@ export async function fetchVoices(apiKey: string): Promise<{ name: string; id: s
   voicesCache.set(apiKey, { voices: result, expiresAt: Date.now() + CACHE_TTL_MS });
   return result;
 }
-
-export function bytesToBinaryString(bytes: Uint8Array): string {
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return binary;
-}

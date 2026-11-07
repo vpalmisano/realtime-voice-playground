@@ -48,7 +48,7 @@ export class SpeechifyTTS extends BaseProvider {
     );
 
     const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE, 'mp3');
-    this.push = push as (bytes: Uint8Array<ArrayBuffer>) => void;
+    this.push = push;
   }
 
   flush(): void {

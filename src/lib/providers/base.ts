@@ -1,6 +1,10 @@
 import EventEmitter from 'events';
 import debug from 'debug';
-import { processInputAudioTrack, processOutputAudioTrack } from '../audio';
+import {
+  processInputAudioTrack,
+  processOutputAudioTrackPcm,
+  processOutputAudioTrackMp3,
+} from '../audio';
 import {
   VoiceActivityDetector,
   type VoiceActivityDetectorOptions,
@@ -82,9 +86,33 @@ export abstract class BaseProvider extends EventEmitter {
     }
   }
 
-  protected async setupOutputAudio(sampleRate: number, format: 'pcm' | 'mp3' = 'pcm') {
+  protected async setupOutputAudio(
+    sampleRate: number,
+    format?: 'i16',
+  ): Promise<{ push: (chunk: string | Uint8Array) => void; flush: () => void }>;
+  protected async setupOutputAudio(
+    sampleRate: number,
+    format: 'f32',
+  ): Promise<{ push: (chunk: Float32Array) => void; flush: () => void }>;
+  protected async setupOutputAudio(
+    sampleRate: number,
+    format: 'mp3',
+  ): Promise<{ push: (chunk: Uint8Array) => void; flush: () => void }>;
+  protected async setupOutputAudio(
+    sampleRate: number,
+    format: 'i16' | 'f32' | 'mp3' = 'i16',
+  ): Promise<{
+    push: (chunk: string | Float32Array | Uint8Array) => void;
+    flush: () => void;
+  }> {
     log(`setupOutputAudio sampleRate=${sampleRate}, format=${format}`);
-    const { push, flush, track, close } = await processOutputAudioTrack(sampleRate, format);
+    const { push, flush, track, close } =
+      format === 'mp3'
+        ? await processOutputAudioTrackMp3(sampleRate)
+        : format === 'f32'
+          ? await processOutputAudioTrackPcm(sampleRate, 'f32')
+          : await processOutputAudioTrackPcm(sampleRate, 'i16');
+
     this.outputAudioTrack = track;
     this.closeOutputAudio = close;
     this.flushOutputAudio = flush;
@@ -96,7 +124,10 @@ export abstract class BaseProvider extends EventEmitter {
       });
       await this.outputAudioVad.start();
     }
-    return { push, flush };
+    return { push, flush } as {
+      push: (chunk: string | Float32Array | Uint8Array) => void;
+      flush: () => void;
+    };
   }
 
   flush(): void {

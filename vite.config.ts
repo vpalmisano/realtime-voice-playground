@@ -17,7 +17,9 @@ export default defineConfig({
     __QUESTIONS__: JSON.stringify(questions),
   },
   base: './',
+  worker: { format: 'es' },
   optimizeDeps: {
     include: ['@ricky0123/vad-web', 'onnxruntime-web', 'onnxruntime-web/wasm'],
+    exclude: ['phonon-tts'],
   },
 });

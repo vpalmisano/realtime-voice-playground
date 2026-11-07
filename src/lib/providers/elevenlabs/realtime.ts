@@ -152,11 +152,8 @@ export class ElevenLabsRealtime extends BaseProvider {
       });
 
       const { push, flush } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE);
-      const pushAudio = push as (chunk: string) => void;
 
-      this.session.transport.on('response.output_audio.delta', event =>
-        pushAudio(atob(event.delta)),
-      );
+      this.session.transport.on('response.output_audio.delta', event => push(atob(event.delta)));
       this.session.transport.on('conversation.item.truncated', () => flush());
       this.session.transport.on('input_audio_buffer.speech_started', () => flush());
       this.session.on('audio_interrupted', () => flush());

@@ -41,7 +41,7 @@ export class GoogleTTS extends BaseProvider {
     this.notify(`Google TTS ready with model ${this.model}, voice ${this.voice}...\n`);
 
     const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE);
-    this.push = push as (chunk: string) => void;
+    this.push = push;
   }
 
   flush(): void {

@@ -47,7 +47,7 @@ export class OpenAITTS extends BaseProvider {
     this.notify(`OpenAI TTS ready with model ${this.model}, voice ${this.voice}...\n`);
 
     const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE, 'mp3');
-    this.push = push as (bytes: Uint8Array<ArrayBuffer>) => void;
+    this.push = push;
   }
 
   flush(): void {

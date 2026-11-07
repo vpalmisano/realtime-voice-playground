@@ -15,7 +15,7 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 - **Custom pipeline providers**:
   - **STT**: ElevenLabs, Google, Gradium, OpenAI
   - **LLM**: Google, OpenAI
-  - **TTS**: Cartesia, ElevenLabs, Google, Gradium, OpenAI, Speechify
+  - **TTS**: Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
 - **Transports**: WebSocket or WebRTC (OpenAI Realtime); WebSocket (Google, ElevenLabs, Gradium)
 - **Session options**: model, voice, transcription, turn detection, and system instructions
 - **Chat**: send text messages or speak via the microphone
@@ -65,13 +65,15 @@ With fake audio enabled and connected, click a prompt under **Audio inputs** to 
 
 Pick a provider for each stage in the stepper. Audio is transcribed by STT, text goes to the LLM, and the LLM reply is spoken by TTS.
 
-| Stage | Providers                                                | Typical defaults                               |
-| ----- | -------------------------------------------------------- | ---------------------------------------------- |
-| STT   | ElevenLabs, Google, Gradium, OpenAI                      | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
-| LLM   | Google, OpenAI                                           | e.g. `gpt-5.4`, `gemini-3.8-flash`             |
-| TTS   | Cartesia, ElevenLabs, Google, Gradium, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
+| Stage | Providers                                                                | Typical defaults                               |
+| ----- | ------------------------------------------------------------------------ | ---------------------------------------------- |
+| STT   | ElevenLabs, Google, Gradium, OpenAI                                      | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
+| LLM   | Google, OpenAI                                                           | e.g. `gpt-5.4`, `gemini-3.8-flash`             |
+| TTS   | Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
 
 Gradium STT/TTS use WebSocket via [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk). Because Gradium’s token endpoint does not return CORS headers on the preflight, install and enable the [Access-Control-Allow-Origin](https://mybrowseraddon.com/access-control-allow-origin.html) browser extension before connecting.
+
+**Gradium Phonon** runs on-device via [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) (WASM worker + [`gradium/phonon-31m-en`](https://huggingface.co/gradium/phonon-31m-en) GGUF, no API key). `npm run dev` / `npm run preview` send COOP/COEP so the threaded CPU build can use `SharedArrayBuffer`. Weights and voices cache in the browser after the first download.
 
 Each stage has its own API key and model/voice fields. Keys and options are stored separately per provider.
 
@@ -126,5 +128,15 @@ The API key needs the **`convai_write`** permission (enable Conversational AI wr
 - [`@elevenlabs/elevenlabs-js`](https://github.com/elevenlabs/elevenlabs-js) / [`@elevenlabs/client`](https://github.com/elevenlabs/elevenlabs-js) ElevenLabs Realtime, STT, TTS
 - [`@cartesia/cartesia-js`](https://github.com/cartesia-ai/cartesia-js) Cartesia TTS
 - [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk) Gradium STT / TTS
+- [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) Gradium Phonon on-device TTS
 - [`@speechify/api`](https://docs.sws.speechify.com) Speechify TTS
 - [`@vpalmisano/webrtcperf-js`](https://github.com/vpalmisano/webrtcperf-js) for fake media, Q&A turns, and plots
+
+## Licenses
+
+This project is [ISC](LICENSE). Most dependencies are MIT, Apache-2.0, or ISC.
+
+**Gradium Phonon** (Custom TTS):
+
+- Runtime [`phonon-tts`](https://www.npmjs.com/package/phonon-tts): MIT OR Apache-2.0
+- Model [`gradium/phonon-31m-en`](https://huggingface.co/gradium/phonon-31m-en) and voices [`gradium/phonon-voices`](https://huggingface.co/gradium/phonon-voices): Apache 2.0 (commercial use allowed)
