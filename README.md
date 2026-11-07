@@ -73,7 +73,7 @@ Pick a provider for each stage in the stepper. Audio is transcribed by STT, text
 
 Gradium STT/TTS use WebSocket via [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk). Because Gradium’s token endpoint does not return CORS headers on the preflight, install and enable the [Access-Control-Allow-Origin](https://mybrowseraddon.com/access-control-allow-origin.html) browser extension before connecting.
 
-**Gradium Phonon** runs on-device via [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) (WASM worker + [`gradium/phonon-31m-en`](https://huggingface.co/gradium/phonon-31m-en) GGUF, no API key). `npm run dev` / `npm run preview` send COOP/COEP so the threaded CPU build can use `SharedArrayBuffer`. Weights and voices cache in the browser after the first download.
+**Gradium Phonon** runs on-device via [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) (WASM worker + [`gradium/phonon-31m-en`](https://huggingface.co/gradium/phonon-31m-en) GGUF, no API key). Weights and voices cache in the browser after the first download.
 
 Each stage has its own API key and model/voice fields. Keys and options are stored separately per provider.
 
