@@ -87,7 +87,7 @@ export class OpenAISTT extends BaseProvider {
     this.running = true;
     log('start model=%s', this.model);
 
-    this.notify(`Connecting to OpenAI STT with model ${this.model}...\n`);
+    this.notify(`Connecting to OpenAI STT with model ${this.model}...`);
 
     try {
       const ephemeralKey = await createEphemeralClientSecret(
@@ -145,7 +145,6 @@ export class OpenAISTT extends BaseProvider {
       });
 
       await this.setupSourceAudio(
-        this.chunkMs,
         binary => {
           if (!this.connection) return;
           this.connection.send({
@@ -153,8 +152,10 @@ export class OpenAISTT extends BaseProvider {
             audio: btoa(binary as string),
           });
         },
-        true,
+        this.chunkMs,
         AUDIO_SAMPLE_RATE,
+        'i16',
+        'string',
       );
     } catch (error) {
       log('error: %o', error);

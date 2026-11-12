@@ -1,7 +1,7 @@
 <script lang="ts">
 import { computed } from 'vue';
 import webrtcperf from './webrtcperf';
-import { appendMessage } from './MessagesLog.vue';
+import { appendMessage } from './EventsLog.vue';
 import { defineReference } from './utils';
 import type { VadOptions } from './lib/providers/base.ts';
 import type { VoiceActivityDetector } from '@vpalmisano/webrtcperf-js';
@@ -105,7 +105,7 @@ export function stopWebrtcperfPlots() {
 function onPlayQuestion(name: string) {
   webrtcperf
     .setMedia(`./audio/${name}`)
-    .catch(error => appendMessage(`Error playing audio ${name}: ${error}\n`));
+    .catch(error => appendMessage(`Error playing audio ${name}: ${error}`));
 }
 </script>
 
@@ -127,7 +127,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mb-4" v-if="!connected">
+  <div class="mb-4 w-100" v-if="!connected">
     <div class="text-subtitle-1 font-weight-bold mb-2">Q&A estimator settings</div>
 
     <v-row>
@@ -148,7 +148,7 @@ onUnmounted(() => {
     </v-row>
 
     <v-row>
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-text-field
           v-model.number="minTalkingDurationMs"
           label="Min talking duration (ms)"
@@ -158,7 +158,7 @@ onUnmounted(() => {
           hide-details
         />
       </v-col>
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-text-field
           v-model.number="minSilentDurationMs"
           label="Min silent duration (ms)"
@@ -168,7 +168,7 @@ onUnmounted(() => {
           hide-details
         />
       </v-col>
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-select
           v-model="detector"
           :items="[...DETECTORS]"
@@ -178,7 +178,7 @@ onUnmounted(() => {
           hide-details
         />
       </v-col>
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-text-field
           v-model.number="chunkMs"
           label="Audio capture chunk size (ms)"

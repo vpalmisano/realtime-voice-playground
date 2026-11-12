@@ -17,17 +17,18 @@ function workletModuleUrl(code: string) {
 
 export async function processInputAudioTrack(
   track: MediaStreamTrack,
-  targetSampleRate: number,
-  callback: (pcm16: ArrayBuffer | string) => void,
+  callback: (pcm16: Int16Array | Float32Array | string) => void,
   chunkMs = 80,
-  stringFormat = false,
+  sampleRate = 16000,
+  format = 'i16',
+  outputType: 'array' | 'string' = 'array',
 ) {
   if (track.kind !== 'audio') {
     throw new Error('Track is not an audio track');
   }
 
   const audioCtx = new AudioContext({
-    sampleRate: targetSampleRate,
+    sampleRate,
     latencyHint: 'interactive',
   });
   if (audioCtx.state === 'suspended') {
@@ -39,18 +40,18 @@ export async function processInputAudioTrack(
     numberOfInputs: 1,
     numberOfOutputs: 1,
     outputChannelCount: [1],
-    processorOptions: { chunkMs },
+    processorOptions: { chunkMs, format },
   });
   worklet.port.onmessage = event => {
-    const { type, buffer } = event.data ?? {};
-    if (type !== 'pcm' || !buffer) {
+    const { buffer } = event.data ?? {};
+    if (!buffer) {
       return;
     }
-    if (!stringFormat) {
+    if (outputType === 'array') {
       callback(buffer);
       return;
     }
-    const bytes = new Uint8Array(buffer);
+    const bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
     let binary = '';
     const chunkSize = 0x8000;
     for (let i = 0; i < bytes.length; i += chunkSize) {

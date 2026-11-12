@@ -37,7 +37,7 @@ export class GoogleSTT extends BaseProvider {
     this.running = true;
     log('start model=%s mode=%s', this.model, this.mode);
 
-    this.notify(`Connecting to Google STT with model ${this.model} (${this.mode})...\n`);
+    this.notify(`Connecting to Google STT with model ${this.model} (${this.mode})...`);
 
     try {
       const ai = new GoogleGenAI({ apiKey: this.apiKey, apiVersion: 'v1beta' });
@@ -92,7 +92,6 @@ export class GoogleSTT extends BaseProvider {
       });
 
       await this.setupSourceAudio(
-        this.chunkMs,
         binary => {
           this.session?.sendRealtimeInput({
             audio: {
@@ -101,7 +100,10 @@ export class GoogleSTT extends BaseProvider {
             },
           });
         },
-        true,
+        this.chunkMs,
+        16000,
+        'i16',
+        'string',
       );
     } catch (error) {
       log('error: %o', error);

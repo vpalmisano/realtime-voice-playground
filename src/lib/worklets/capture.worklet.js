@@ -1,6 +1,6 @@
 /**
  * Captures float input, converts to Int16 PCM, emits fixed-size chunks.
- * Options: { chunkMs?: number, keepAliveMs?: number } (default 80, 10000)
+ * Options: { chunkMs?: number, format?: 'i16' | 'f32'} (default 80, 'i16')
  * Out: { type: 'pcm', buffer: ArrayBuffer }
  */
 class Pcm16CaptureProcessor extends AudioWorkletProcessor {
@@ -9,7 +9,12 @@ class Pcm16CaptureProcessor extends AudioWorkletProcessor {
     const chunkMs = options?.processorOptions?.chunkMs ?? 80;
     this._keepAliveMs = options?.processorOptions?.keepAliveMs ?? 10000;
     this._chunkSamples = Math.max(1, Math.round(sampleRate * (chunkMs / 1000)));
-    this._pending = new Int16Array(this._chunkSamples);
+    this._format = options?.processorOptions?.format ?? 'i16';
+    if (this._format === 'i16') {
+      this._pending = new Int16Array(this._chunkSamples);
+    } else {
+      this._pending = new Float32Array(this._chunkSamples);
+    }
     this._pendingCount = 0;
     this._chunkPeak = 0;
     this._silenceStart = 0;
@@ -32,12 +37,29 @@ class Pcm16CaptureProcessor extends AudioWorkletProcessor {
       now - this._lastSentTimeMs > this._keepAliveMs
     ) {
       const pcm = this._pending.slice(0, this._pendingCount);
-      this.port.postMessage({ type: 'pcm', buffer: pcm.buffer }, [pcm.buffer]);
+      this.port.postMessage({ buffer: pcm }, [pcm.buffer]);
       this._lastSentTimeMs = now;
     }
 
     this._pendingCount = 0;
     this._chunkPeak = 0;
+  }
+
+  _processFrame(frame) {
+    if (this._format === 'i16') {
+      frame = Math.max(-1, Math.min(1, frame));
+      this._pending[this._pendingCount++] = frame < 0 ? frame * 0x8000 : frame * 0x7fff;
+    } else {
+      this._pending[this._pendingCount++] = frame;
+    }
+    const abs = frame < 0 ? -frame : frame;
+    if (abs > this._chunkPeak) {
+      this._chunkPeak = abs;
+    }
+
+    if (this._pendingCount >= this._chunkSamples) {
+      this._emit();
+    }
   }
 
   process(inputs) {
@@ -47,17 +69,9 @@ class Pcm16CaptureProcessor extends AudioWorkletProcessor {
     }
 
     for (let i = 0; i < input.length; i++) {
-      const s = Math.max(-1, Math.min(1, input[i]));
-      const abs = s < 0 ? -s : s;
-      if (abs > this._chunkPeak) {
-        this._chunkPeak = abs;
-      }
-      this._pending[this._pendingCount++] = s < 0 ? s * 0x8000 : s * 0x7fff;
-
-      if (this._pendingCount >= this._chunkSamples) {
-        this._emit();
-      }
+      this._processFrame(input[i]);
     }
+
     return true;
   }
 }

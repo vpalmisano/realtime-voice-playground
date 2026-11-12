@@ -54,13 +54,14 @@ export abstract class BaseProvider extends EventEmitter {
   }
 
   protected async setupSourceAudio(
+    callback: (pcm16: Int16Array | Float32Array | string) => void,
     chunkMs: number,
-    callback: (pcm16: ArrayBuffer | string) => void,
-    stringFormat = false,
     sampleRate = 16000,
+    format = 'i16',
+    outputType: 'array' | 'string' = 'array',
   ) {
     log(
-      `setupSourceAudio chunkMs=${chunkMs}, stringFormat=${stringFormat}, sampleRate=${sampleRate}`,
+      `setupSourceAudio chunkMs=${chunkMs}, format=${format}, outputType=${outputType}, sampleRate=${sampleRate}`,
     );
     if (!this.sourceAudioTrack) {
       await this.getMediaStream();
@@ -70,10 +71,11 @@ export abstract class BaseProvider extends EventEmitter {
     }
     const { close: closeSourceAudio } = await processInputAudioTrack(
       this.sourceAudioTrack!,
-      sampleRate,
       callback,
       chunkMs,
-      stringFormat,
+      sampleRate,
+      format,
+      outputType,
     );
     this.closeSourceAudio = closeSourceAudio;
 

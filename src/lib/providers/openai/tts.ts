@@ -44,7 +44,7 @@ export class OpenAITTS extends BaseProvider {
     this.running = true;
     log('start model=%s voice=%s', this.model, this.voice);
 
-    this.notify(`OpenAI TTS ready with model ${this.model}, voice ${this.voice}...\n`);
+    this.notify(`OpenAI TTS ready with model ${this.model}, voice ${this.voice}...`);
 
     const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE, 'mp3');
     this.push = push;
@@ -119,7 +119,7 @@ export class OpenAITTS extends BaseProvider {
         return;
       }
       log('synthesize error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       if (this.abortController === abortController) {
         this.abortController = null;

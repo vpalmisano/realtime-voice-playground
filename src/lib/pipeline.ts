@@ -13,9 +13,9 @@ export class PipelineSession extends BaseProvider {
     this.stt = stt;
     this.llm = llm;
     this.tts = tts;
-    this.stt.on('notify', text => this.notify(text));
-    this.llm.on('notify', text => this.notify(text));
-    this.tts.on('notify', text => this.notify(text));
+    this.stt.on('notify', text => this.notify(`[${this.stt.constructor.name}] ${text}`));
+    this.llm.on('notify', text => this.notify(`[${this.llm.constructor.name}] ${text}`));
+    this.tts.on('notify', text => this.notify(`[${this.tts.constructor.name}] ${text}`));
   }
 
   async start() {

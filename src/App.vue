@@ -15,7 +15,7 @@ import PipelineSettings, {
   getSttProvider as getSttProviderName,
   getTtsProvider as getTtsProviderName,
 } from './PipelineSettings.vue';
-import MessagesLog, { appendMessage, setStartTime, startTime } from './MessagesLog.vue';
+import EventsLog, { appendMessage, setStartTime, startTime } from './EventsLog.vue';
 import PerfSettings, {
   applyPerfConnectSettings,
   getVadOptions,
@@ -116,7 +116,7 @@ async function onConnect() {
     await session.start();
 
     if (session instanceof OpenAILLM) {
-      await appendMessage(`Connected in ${Math.round(performance.now() - startTime)}ms\n`);
+      appendMessage(`Connected in ${Math.round(performance.now() - startTime)}ms`);
       connected.value = true;
       return;
     }
@@ -135,13 +135,13 @@ async function onConnect() {
     }
     await startEstimateQuestionAnswerDelay(session.sourceAudioVad, session.outputAudioVad);
 
-    await appendMessage(`Connected in ${Math.round(performance.now() - startTime)}ms\n`);
+    appendMessage(`Connected in ${Math.round(performance.now() - startTime)}ms`);
     connected.value = true;
 
     startWebrtcperfPlots(plotsEl.value);
   } catch (error) {
     log(`onConnect error: ${error}`);
-    appendMessage(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+    appendMessage(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     onDisconnect(error instanceof Error ? error.message : 'Unknown error');
   } finally {
     connecting.value = false;
@@ -153,7 +153,7 @@ function onDisconnect(reason?: string) {
   session.removeAllListeners();
   const { promptTokenCount, responseTokenCount } = session;
   appendMessage(
-    `Disconnected${reason ? ` (${reason})` : ''}, tokens usage: ${promptTokenCount} input, ${responseTokenCount} output\n`,
+    `Disconnected${reason ? ` (${reason})` : ''}, tokens usage: ${promptTokenCount} input, ${responseTokenCount} output`,
   );
   maybeDownloadResponseAudio(session.outputAudioTrack);
   stopEstimateQuestionAnswerDelay();
@@ -174,7 +174,7 @@ window.addEventListener('beforeunload', () => onDisconnect('Page unloaded'));
 function onSendText() {
   const text = textInput.value.trim();
   if (!session || !text) return;
-  appendMessage(`Sending: "${text}"\n`);
+  appendMessage(`Sending: "${text}"`);
   session.sendMessage(text);
   textInput.value = '';
 }
@@ -223,7 +223,7 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
       waveformRef.value?.addMarker(answerEndTime, '#FF0000', msg);
       break;
   }
-  await appendMessage(`${msg}\n`);
+  appendMessage(msg);
 }
 </script>
 
@@ -314,7 +314,7 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
           </v-card>
         </div>
 
-        <div class="d-flex flex-wrap ga-2 my-4">
+        <div class="my-4">
           <PerfSettings :connected="connected" @turn="onTurn" />
         </div>
 
@@ -330,7 +330,7 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
           />
         </div>
 
-        <MessagesLog />
+        <EventsLog />
 
         <div class="d-flex flex-wrap align-center ga-2 mb-4">
           <v-text-field

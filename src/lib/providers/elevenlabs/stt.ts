@@ -79,13 +79,15 @@ export class ElevenLabsSTT extends BaseProvider {
       });
 
       await this.setupSourceAudio(
-        this.chunkMs,
         binary => {
           if (this.connection && connected) {
             this.connection.send({ audioBase64: btoa(binary as string) });
           }
         },
-        true,
+        this.chunkMs,
+        16000,
+        'i16',
+        'string',
       );
     } catch (error) {
       log('error: %o', error);

@@ -40,7 +40,7 @@ export class GoogleAIRealtime extends BaseProvider {
     log('start');
     this.running = true;
 
-    this.notify(`Connecting to Google AI with model ${this.model}, voice ${this.voice}...\n`);
+    this.notify(`Connecting to Google AI with model ${this.model}, voice ${this.voice}...`);
 
     try {
       const { push, flush } = await this.setupOutputAudio(24000);
@@ -112,7 +112,6 @@ export class GoogleAIRealtime extends BaseProvider {
       });
 
       await this.setupSourceAudio(
-        this.chunkMs,
         binary => {
           this.session?.sendRealtimeInput({
             audio: {
@@ -121,7 +120,10 @@ export class GoogleAIRealtime extends BaseProvider {
             },
           });
         },
-        true,
+        this.chunkMs,
+        16000,
+        'i16',
+        'string',
       );
     } catch (error) {
       log('error: %o', error);

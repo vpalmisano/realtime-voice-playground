@@ -126,7 +126,7 @@ export class OpenAIRealtime extends BaseProvider {
     this.running = true;
 
     this.notify(
-      `Connecting to OpenAI via ${this.transportType} with model ${this.model}, voice ${this.voice}, transcription ${this.transcriptionModel}...\n`,
+      `Connecting to OpenAI via ${this.transportType} with model ${this.model}, voice ${this.voice}, transcription ${this.transcriptionModel}...`,
     );
 
     try {
@@ -176,9 +176,9 @@ export class OpenAIRealtime extends BaseProvider {
       });
 
       if (this.transportType === 'websocket') {
-        await this.setupSourceAudio(this.chunkMs, pcm16 => {
-          this.session?.sendAudio(pcm16 as ArrayBuffer);
-        });
+        await this.setupSourceAudio(buffer => {
+          this.session?.sendAudio((buffer as Int16Array<ArrayBuffer>).buffer);
+        }, this.chunkMs);
         const { push, flush } = await this.setupOutputAudio(24000);
 
         this.session.transport.on('response.output_audio.delta', event => push(atob(event.delta)));

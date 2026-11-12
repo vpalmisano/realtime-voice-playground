@@ -40,7 +40,7 @@ export class GoogleLLM extends BaseProvider {
     }
     log('start model=%s', this.model);
     this.running = true;
-    this.notify(`Google LLM ready with model ${this.model}\n`);
+    this.notify(`Google LLM ready with model ${this.model}`);
   }
 
   sendMessage(message: string): void {
@@ -109,7 +109,7 @@ export class GoogleLLM extends BaseProvider {
         return;
       }
       log('generate error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       if (this.abortController === abortController) {
         this.abortController = null;

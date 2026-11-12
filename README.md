@@ -13,8 +13,8 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
   - **OpenAI / Google / ElevenLabs Realtime** — single-provider voice-to-voice sessions
   - **Custom** — compose a pipeline from separate STT, LLM, and TTS providers
 - **Custom pipeline providers**:
-  - **STT**: ElevenLabs, Google, Gradium, OpenAI
-  - **LLM**: Google, OpenAI
+  - **STT**: ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
+  - **LLM**: Anthropic, Google, Nvidia (local), OpenAI
   - **TTS**: Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
 - **Transports**: WebSocket or WebRTC (OpenAI Realtime); WebSocket (Google, ElevenLabs, Gradium)
 - **Session options**: model, voice, transcription, turn detection, and system instructions
@@ -33,6 +33,7 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 | Provider   | Where to get a key                                                                 | Notes                                       |
 | ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------- |
 | OpenAI     | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)               | Realtime, STT, LLM, and/or TTS              |
+| Anthropic  | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | LLM (Custom pipeline)                       |
 | Google     | [aistudio.google.com/apikey](https://aistudio.google.com/apikey)                   | Gemini Live, STT, LLM, and/or TTS           |
 | ElevenLabs | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) | Realtime needs `convai_write`; also STT/TTS |
 | Gradium    | [gradium.ai](https://gradium.ai)                                                   | STT/TTS (Custom pipeline)                   |
@@ -68,7 +69,7 @@ Pick a provider for each stage in the stepper. Audio is transcribed by STT, text
 | Stage | Providers                                                                | Typical defaults                               |
 | ----- | ------------------------------------------------------------------------ | ---------------------------------------------- |
 | STT   | ElevenLabs, Google, Gradium, OpenAI                                      | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
-| LLM   | Google, OpenAI                                                           | e.g. `gpt-5.4`, `gemini-3.8-flash`             |
+| LLM   | Anthropic, Google, OpenAI                                                | e.g. `claude-sonnet-5-5`, `gpt-5.4`            |
 | TTS   | Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
 
 Gradium STT/TTS use WebSocket via [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk). Because Gradium’s token endpoint does not return CORS headers on the preflight, install and enable the [Access-Control-Allow-Origin](https://mybrowseraddon.com/access-control-allow-origin.html) browser extension before connecting.
@@ -124,6 +125,7 @@ The API key needs the **`convai_write`** permission (enable Conversational AI wr
 - Vue 3, Vite, TypeScript, Vuetify
 - [`@openai/agents`](https://github.com/openai/openai-agents-js) Realtime (WebRTC / WebSocket; also used for ElevenLabs Realtime)
 - [`openai`](https://github.com/openai/openai-node) for OpenAI STT / LLM / TTS
+- [`@anthropic-ai/sdk`](https://github.com/anthropics/anthropic-sdk-typescript) Anthropic LLM
 - [`@google/genai`](https://github.com/googleapis/js-genai) Gemini Live, STT, LLM, TTS
 - [`@elevenlabs/elevenlabs-js`](https://github.com/elevenlabs/elevenlabs-js) / [`@elevenlabs/client`](https://github.com/elevenlabs/elevenlabs-js) ElevenLabs Realtime, STT, TTS
 - [`@cartesia/cartesia-js`](https://github.com/cartesia-ai/cartesia-js) Cartesia TTS

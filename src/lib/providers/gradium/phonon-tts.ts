@@ -1,4 +1,4 @@
-import { PhononTTS, type Quant } from 'phonon-tts';
+import { PhononTTS, type LoadProgress, type Quant } from 'phonon-tts';
 import { AwaitQueue, AwaitQueueRemovedTaskError, AwaitQueueStoppedError } from 'awaitqueue';
 import { BaseProvider, type VadOptions } from '../base.ts';
 import { DEFAULT_VOICE_ID, PHONON_VOICE_URLS } from './phonon-voices.ts';
@@ -7,8 +7,9 @@ import debug from 'debug';
 const log = debug('realtime:gradium-phonon-tts');
 
 export const AUDIO_SAMPLE_RATE = 24000;
-const MODEL_REV = '8c64b55ec301728e2d1695bfea87a08a267d0c2d';
-const MODEL_BASE = `https://huggingface.co/gradium/phonon-31m-en/resolve/${MODEL_REV}`;
+export const MODEL_BASE_URL = 'https://huggingface.co/gradium/phonon-31m-en';
+export const MODEL_REV = '8c64b55ec301728e2d1695bfea87a08a267d0c2d';
+export const MODEL_BASE = `${MODEL_BASE_URL}/resolve/${MODEL_REV}`;
 
 export { DEFAULT_VOICE_ID };
 export const DEFAULT_QUANT = 'q8' as const;
@@ -55,7 +56,7 @@ export class GradiumPhononTTS extends BaseProvider {
     );
     this.notify(
       `Loading Gradium Phonon (${this.quant} / ${this.preferredDevice}` +
-        `${crossOriginIsolated ? ', threaded' : ', single-thread'})...\n`,
+        `${crossOriginIsolated ? ', threaded' : ', single-thread'})...`,
     );
 
     try {
@@ -74,6 +75,11 @@ export class GradiumPhononTTS extends BaseProvider {
           defaultVoice: this.voiceId,
         },
         voices: [this.voiceId],
+        onProgress: (progress: LoadProgress) => {
+          log(
+            `progress ${progress.file}: ${progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0}`,
+          );
+        },
       });
       if (!this.running) {
         tts.dispose();
@@ -85,17 +91,11 @@ export class GradiumPhononTTS extends BaseProvider {
       this.push = push;
       this.notify(
         `Gradium Phonon ready (voice ${this.voiceId}, ${tts.device}` +
-          `${tts.device === 'cpu' ? ` ×${tts.threads}` : ''}).\n`,
+          `${tts.device === 'cpu' ? ` ×${tts.threads}` : ''}).`,
       );
-      if (!crossOriginIsolated) {
-        this.notify(
-          `> Note: page is not cross-origin isolated (${tts.threadsReason}). ` +
-            `Serve with COOP/COEP for multi-thread CPU.\n`,
-        );
-      }
     } catch (error) {
       log('start error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       this.stop('Failed to start Gradium Phonon TTS');
       throw error;
     }
@@ -174,7 +174,7 @@ export class GradiumPhononTTS extends BaseProvider {
         return;
       }
       log('synthesize error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       this.activeStream = null;
       if (this.abortController === abortController) {

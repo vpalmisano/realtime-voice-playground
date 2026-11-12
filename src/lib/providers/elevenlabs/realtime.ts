@@ -125,7 +125,7 @@ export class ElevenLabsRealtime extends BaseProvider {
     log('start');
     this.running = true;
 
-    this.notify(`Connecting to ElevenLabs with model ${this.model}, voice ${this.voice}...\n`);
+    this.notify(`Connecting to ElevenLabs with model ${this.model}, voice ${this.voice}...`);
 
     try {
       const agent = new RealtimeAgent({
@@ -147,9 +147,9 @@ export class ElevenLabsRealtime extends BaseProvider {
         },
       });
 
-      await this.setupSourceAudio(this.chunkMs, pcm16 => {
-        this.session?.sendAudio(pcm16 as ArrayBuffer);
-      });
+      await this.setupSourceAudio(buffer => {
+        this.session?.sendAudio((buffer as Int16Array<ArrayBuffer>).buffer);
+      }, this.chunkMs);
 
       const { push, flush } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE);
 

@@ -1,8 +1,15 @@
 <script lang="ts">
 import { defineReference } from './utils';
 
-const STT_PROVIDERS = ['ElevenLabs', 'Google', 'Gradium', 'OpenAI'] as const;
-const LLM_PROVIDERS = ['Google', 'OpenAI'] as const;
+const STT_PROVIDERS = [
+  'ElevenLabs',
+  'Google',
+  'Gradium',
+  'Mistral Voxtral Mini 4B Realtime 2602',
+  'NVIDIA Nemotron 3.5',
+  'OpenAI',
+] as const;
+const LLM_PROVIDERS = ['Anthropic', 'Google', 'NVIDIA Nemotron 3 Nano 4B', 'OpenAI'] as const;
 const TTS_PROVIDERS = [
   'Cartesia',
   'ElevenLabs',
@@ -36,8 +43,12 @@ import ElevenLabsSTTSettings from './providers/elevenlabs/ElevenLabsSTT.vue';
 import GoogleSTTSettings from './providers/google/GoogleSTT.vue';
 import OpenaiSTTSettings from './providers/openai/OpenaiSTT.vue';
 import GradiumSTTSettings from './providers/gradium/GradiumSTT.vue';
+import MistralVoxtralSTTSettings from './providers/mistral/MistralVoxtralSTT.vue';
+import NvidiaNemotronSTTSettings from './providers/nvidia/NvidiaNemotronSTT.vue';
 import OpenaiLLMSettings from './providers/openai/OpenaiLLM.vue';
 import GoogleLLMSettings from './providers/google/GoogleLLM.vue';
+import AnthropicLLMSettings from './providers/anthropic/AnthropicLLM.vue';
+import NvidiaNemotronLLMSettings from './providers/nvidia/NvidiaNemotronLLM.vue';
 import ElevenLabsTTSSettings from './providers/elevenlabs/ElevenLabsTTS.vue';
 import GoogleTTSSettings from './providers/google/GoogleTTS.vue';
 import OpenaiTTSSettings from './providers/openai/OpenaiTTS.vue';
@@ -52,11 +63,11 @@ const step = ref('1');
 <template>
   <v-stepper v-model="step" editable hide-actions flat>
     <v-stepper-header>
-      <v-stepper-item :title="`${sttProvider} STT`" value="1" />
+      <v-stepper-item title="STT" :subtitle="sttProvider" value="1" />
       <v-divider />
-      <v-stepper-item :title="`${llmProvider} LLM`" value="2" />
+      <v-stepper-item title="LLM" :subtitle="llmProvider" value="2" />
       <v-divider />
-      <v-stepper-item :title="`${ttsProvider} TTS`" value="3" />
+      <v-stepper-item title="TTS" :subtitle="ttsProvider" value="3" />
     </v-stepper-header>
 
     <v-stepper-window>
@@ -76,7 +87,11 @@ const step = ref('1');
         <ElevenLabsSTTSettings v-if="sttProvider === 'ElevenLabs'" />
         <GoogleSTTSettings v-else-if="sttProvider === 'Google'" />
         <OpenaiSTTSettings v-else-if="sttProvider === 'OpenAI'" />
-        <GradiumSTTSettings v-else />
+        <GradiumSTTSettings v-else-if="sttProvider === 'Gradium'" />
+        <MistralVoxtralSTTSettings
+          v-else-if="sttProvider === 'Mistral Voxtral Mini 4B Realtime 2602'"
+        />
+        <NvidiaNemotronSTTSettings v-else-if="sttProvider === 'NVIDIA Nemotron 3.5'" />
       </v-stepper-window-item>
 
       <v-stepper-window-item value="2">
@@ -93,7 +108,9 @@ const step = ref('1');
           </v-col>
         </v-row>
         <OpenaiLLMSettings v-if="llmProvider === 'OpenAI'" />
-        <GoogleLLMSettings v-else />
+        <GoogleLLMSettings v-else-if="llmProvider === 'Google'" />
+        <AnthropicLLMSettings v-else-if="llmProvider === 'Anthropic'" />
+        <NvidiaNemotronLLMSettings v-else-if="llmProvider === 'NVIDIA Nemotron 3 Nano 4B'" />
       </v-stepper-window-item>
 
       <v-stepper-window-item value="3">

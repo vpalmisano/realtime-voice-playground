@@ -56,9 +56,7 @@ export class GradiumSTT extends BaseProvider {
     this.running = true;
     log('start model=%s language=%s delay=%d', this.model, this.language, this.delayInFrames);
 
-    this.notify(
-      `Connecting to Gradium STT with model ${this.model}, language ${this.language}...\n`,
-    );
+    this.notify(`Connecting to Gradium STT with model ${this.model}, language ${this.language}...`);
 
     try {
       this.session = await this.client
@@ -75,13 +73,16 @@ export class GradiumSTT extends BaseProvider {
       void this.listen();
 
       await this.setupSourceAudio(
-        this.chunkMs,
         binary => {
           if (!this.session || !this.running) return;
-          void this.session.sendAudio(new Uint8Array(binary as ArrayBuffer));
+          const buffer = binary as Int16Array;
+          const bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+          void this.session.sendAudio(bytes);
         },
-        false,
+        this.chunkMs,
         AUDIO_SAMPLE_RATE,
+        'i16',
+        'array',
       );
     } catch (error) {
       log('error: %o', error);

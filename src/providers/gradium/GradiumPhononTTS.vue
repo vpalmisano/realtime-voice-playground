@@ -10,6 +10,7 @@ import {
 } from '../../lib/providers/gradium/phonon-tts';
 import { PHONON_VOICES } from '../../lib/providers/gradium/phonon-voices';
 import { defineReference } from '../../utils';
+import { MODEL_BASE_URL } from '../../lib/providers/gradium/phonon-tts';
 
 const PREFIX = 'GradiumPhononTTS:';
 
@@ -35,8 +36,9 @@ defineOptions({ name: 'GradiumPhononTTSSettings' });
   <v-row>
     <v-col cols="12">
       <v-alert type="info" variant="tonal" density="comfortable" class="mb-0">
-        Gradium Phonon runs on-device. Please wait for the model download to finish (~65&nbsp;MB q8
-        / ~103&nbsp;MB f32).
+        Model runs on-device via
+        <a :href="MODEL_BASE_URL" target="_blank" rel="noopener noreferrer">Transformers.js</a>.
+        Please wait for the model download to finish (~65&nbsp;MB q8 / ~103&nbsp;MB f32).
       </v-alert>
     </v-col>
     <v-col cols="12" md="6" lg="4">

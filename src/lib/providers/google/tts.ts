@@ -38,7 +38,7 @@ export class GoogleTTS extends BaseProvider {
     this.running = true;
     log('start model=%s voice=%s', this.model, this.voice);
 
-    this.notify(`Google TTS ready with model ${this.model}, voice ${this.voice}...\n`);
+    this.notify(`Google TTS ready with model ${this.model}, voice ${this.voice}...`);
 
     const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE);
     this.push = push;
@@ -125,7 +125,7 @@ export class GoogleTTS extends BaseProvider {
         return;
       }
       log('synthesize error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       if (this.abortController === abortController) {
         this.abortController = null;

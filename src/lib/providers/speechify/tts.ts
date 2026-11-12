@@ -44,7 +44,7 @@ export class SpeechifyTTS extends BaseProvider {
     this.notify(
       `Speechify TTS ready with model ${this.model}, voice ${this.voiceId}${
         this.language ? `, language ${this.language}` : ''
-      }...\n`,
+      }...`,
     );
 
     const { push } = await this.setupOutputAudio(AUDIO_SAMPLE_RATE, 'mp3');
@@ -124,7 +124,7 @@ export class SpeechifyTTS extends BaseProvider {
         return;
       }
       log('synthesize error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       if (this.abortController === abortController) {
         this.abortController = null;
