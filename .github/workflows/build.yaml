@@ -98,7 +98,11 @@ jobs:
           pinned: false
           ---
 
+          # Realtime Voice Playground
+
           Interactive voice AI playground — realtime and custom STT → LLM → TTS pipelines.
+
+          [GitHub repository](https://github.com/vpalmisano/realtime-voice-playground)
           EOF
       - uses: actions/setup-python@v5
         with:
