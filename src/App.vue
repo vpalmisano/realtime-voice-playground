@@ -15,7 +15,7 @@ import PipelineSettings, {
   getSttProvider as getSttProviderName,
   getTtsProvider as getTtsProviderName,
 } from './PipelineSettings.vue';
-import EventsLog, { appendMessage, setStartTime, startTime } from './EventsLog.vue';
+import EventsLog, { appendEvent, setStartTime, startTime } from './EventsLog.vue';
 import PerfSettings, {
   applyPerfConnectSettings,
   getVadOptions,
@@ -36,6 +36,7 @@ import { getLlmProvider, getSttProvider, getTtsProvider } from './providers/inde
 import type { BaseProvider } from './lib/providers/base.ts';
 import webrtcperf from './webrtcperf.ts';
 import debug from 'debug';
+import type { SnackbarMessage } from 'vuetify/lib/components/VSnackbarQueue/VSnackbarQueue.mjs';
 
 const log = debug('realtime:app');
 
@@ -79,6 +80,8 @@ const settingsComponent = computed(() => {
 
 let session: BaseProvider | null = null;
 
+const errorsQueue = ref<SnackbarMessage[]>([]);
+
 async function onConnect() {
   if (connecting.value || connected.value) return;
 
@@ -108,7 +111,8 @@ async function onConnect() {
     if (!session) {
       throw new Error('Failed to create session');
     }
-    session.on('notify', (message: string) => appendMessage(message));
+    session.on('notify', (message: string) => appendEvent(message));
+    session.on('error', (text: string) => errorsQueue.value.push({ text, color: 'error' }));
     session.on('marker', (timeMs: number, color: string, message: string) =>
       waveformRef.value?.addMarker(timeMs, color, message),
     );
@@ -116,7 +120,7 @@ async function onConnect() {
     await session.start();
 
     if (session instanceof OpenAILLM) {
-      appendMessage(`Connected in ${Math.round(performance.now() - startTime)}ms`);
+      appendEvent(`Connected in ${Math.round(performance.now() - startTime)}ms`);
       connected.value = true;
       return;
     }
@@ -135,13 +139,16 @@ async function onConnect() {
     }
     await startEstimateQuestionAnswerDelay(session.sourceAudioVad, session.outputAudioVad);
 
-    appendMessage(`Connected in ${Math.round(performance.now() - startTime)}ms`);
+    appendEvent(`Connected in ${Math.round(performance.now() - startTime)}ms`);
     connected.value = true;
 
     startWebrtcperfPlots(plotsEl.value);
   } catch (error) {
     log(`onConnect error: ${error}`);
-    appendMessage(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    errorsQueue.value.push({
+      text: error instanceof Error ? error.message : 'Unknown error',
+      color: 'error',
+    });
     onDisconnect(error instanceof Error ? error.message : 'Unknown error');
   } finally {
     connecting.value = false;
@@ -152,7 +159,7 @@ function onDisconnect(reason?: string) {
   if (!session) return;
   session.removeAllListeners();
   const { promptTokenCount, responseTokenCount } = session;
-  appendMessage(
+  appendEvent(
     `Disconnected${reason ? ` (${reason})` : ''}, tokens usage: ${promptTokenCount} input, ${responseTokenCount} output`,
   );
   maybeDownloadResponseAudio(session.outputAudioTrack);
@@ -174,7 +181,7 @@ window.addEventListener('beforeunload', () => onDisconnect('Page unloaded'));
 function onSendText() {
   const text = textInput.value.trim();
   if (!session || !text) return;
-  appendMessage(`Sending: "${text}"`);
+  appendEvent(`Sending: "${text}"`);
   session.sendMessage(text);
   textInput.value = '';
 }
@@ -223,7 +230,7 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
       waveformRef.value?.addMarker(answerEndTime, '#FF0000', msg);
       break;
   }
-  appendMessage(msg);
+  appendEvent(msg);
 }
 </script>
 
@@ -348,6 +355,13 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
 
         <div ref="plotsEl" class="d-flex flex-wrap ga-2 mb-4" id="webrtcperf-plots"></div>
       </v-container>
+
+      <v-snackbar-queue
+        ref="errorsSnackbarQueue"
+        v-model="errorsQueue"
+        :total-visible="5"
+        closable
+      ></v-snackbar-queue>
     </v-main>
   </v-app>
 </template>

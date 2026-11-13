@@ -162,7 +162,7 @@ export class NvidiaNemotronSTT extends BaseProvider {
       });
     } catch (error) {
       log('start error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.notifyError(error instanceof Error ? error.message : 'Unknown error');
       this.stop('Failed to start NVIDIA Nemotron STT');
       throw error;
     }
@@ -192,7 +192,7 @@ export class NvidiaNemotronSTT extends BaseProvider {
           return;
         }
         log('worker error: %s', data.error);
-        this.notify(`> Error: ${data.error}`);
+        this.notifyError(data.error);
         this.stop('NVIDIA Nemotron STT worker failed');
         break;
       default:

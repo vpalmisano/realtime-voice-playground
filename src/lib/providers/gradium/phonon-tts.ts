@@ -95,7 +95,7 @@ export class GradiumPhononTTS extends BaseProvider {
       );
     } catch (error) {
       log('start error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.notifyError(error instanceof Error ? error.message : 'Unknown error');
       this.stop('Failed to start Gradium Phonon TTS');
       throw error;
     }
@@ -174,7 +174,7 @@ export class GradiumPhononTTS extends BaseProvider {
         return;
       }
       log('synthesize error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.notifyError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       this.activeStream = null;
       if (this.abortController === abortController) {

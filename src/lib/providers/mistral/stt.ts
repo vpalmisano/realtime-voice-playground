@@ -136,12 +136,12 @@ export class MistralVoxtralSTT extends BaseProvider {
           return;
         }
         log('streaming error: %o', error);
-        this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.notifyError(error instanceof Error ? error.message : 'Unknown error');
         this.stop('Mistral Voxtral Realtime streaming failed');
       });
     } catch (error) {
       log('start error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.notifyError(error instanceof Error ? error.message : 'Unknown error');
       this.stop('Failed to start Mistral Voxtral STT');
       throw error;
     }

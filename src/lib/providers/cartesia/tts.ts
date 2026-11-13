@@ -125,7 +125,7 @@ export class CartesiaTTS extends BaseProvider {
         return;
       }
       log('synthesize error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.notifyError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       if (this.abortController === abortController) {
         this.abortController = null;

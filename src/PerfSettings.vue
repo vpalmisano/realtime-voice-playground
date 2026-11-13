@@ -1,7 +1,7 @@
 <script lang="ts">
 import { computed } from 'vue';
 import webrtcperf from './webrtcperf';
-import { appendMessage } from './EventsLog.vue';
+import { appendEvent } from './EventsLog.vue';
 import { defineReference } from './utils';
 import type { VadOptions } from './lib/providers/base.ts';
 import type { VoiceActivityDetector } from '@vpalmisano/webrtcperf-js';
@@ -105,7 +105,7 @@ export function stopWebrtcperfPlots() {
 function onPlayQuestion(name: string) {
   webrtcperf
     .setMedia(`./audio/${name}`)
-    .catch(error => appendMessage(`Error playing audio ${name}: ${error}`));
+    .catch(error => appendEvent(`Error playing audio ${name}: ${error}`));
 }
 </script>
 

@@ -119,7 +119,7 @@ export class NvidiaNemotronLLM extends BaseProvider {
       this.notify(`NVIDIA Nemotron 3 Nano 4B ready (${this.device}).`);
     } catch (error) {
       log('start error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.notifyError(error instanceof Error ? error.message : 'Unknown error');
       this.stop('Failed to start NVIDIA Nemotron LLM');
       throw error;
     }
@@ -143,7 +143,7 @@ export class NvidiaNemotronLLM extends BaseProvider {
         break;
       case 'error':
         log('worker error: %s', data.error);
-        this.notify(`> Error: ${data.error}`);
+        this.notifyError(data.error);
         break;
       default:
         break;
@@ -216,7 +216,7 @@ export class NvidiaNemotronLLM extends BaseProvider {
       return;
     }
     log('generate error: %s', error);
-    this.notify(`> Error: ${error}`);
+    this.notifyError(error);
   }
 
   protected closeSession(reason?: string): void {

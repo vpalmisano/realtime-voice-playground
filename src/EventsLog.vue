@@ -17,7 +17,7 @@ function scrollToBottom() {
   }
 }
 
-export function appendMessage(text: string) {
+export function appendEvent(text: string) {
   const ts = startTime > 0 ? Math.round(performance.now() - startTime) / 1000 : 0;
   events.value += `${ts > 0 ? `[${ts}] ` : ''}${text}\n`;
   nextTick().then(() => requestAnimationFrame(scrollToBottom));

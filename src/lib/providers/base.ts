@@ -164,6 +164,10 @@ export abstract class BaseProvider extends EventEmitter {
     this.emit('notify', message);
   }
 
+  protected notifyError(message: string): void {
+    this.emit('error', message);
+  }
+
   protected marker(timeMs: number, color: string, message: string): void {
     this.emit('marker', timeMs, color, message);
   }
