@@ -93,10 +93,11 @@ export class NvidiaNemotronLLM extends BaseProvider {
           const data = event.data;
           switch (data.type) {
             case 'progress':
-              log('progress: %d', data.progress);
+              this.notifyProgress('Loading', data.progress);
               break;
             case 'ready':
               this.ready = true;
+              this.notifyProgress('Loading', 100);
               worker.onmessage = event2 => this.handleWorkerMessage(event2.data);
               resolve();
               break;

@@ -13,7 +13,7 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
   - **OpenAI / Google / ElevenLabs / Inworld Realtime** — single-provider voice-to-voice sessions
   - **Custom** — compose a pipeline from separate STT, LLM, and TTS providers
 - **Custom pipeline providers**:
-  - **STT**: ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
+  - **STT**: Cohere (local), ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
   - **LLM**: Anthropic, Google, Nvidia (local), OpenAI
   - **TTS**: Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
 - **Transports**: WebSocket or WebRTC (OpenAI / Inworld Realtime); WebSocket (Google, ElevenLabs, Gradium)
@@ -69,11 +69,13 @@ Pick a provider for each stage in the stepper. Audio is transcribed by STT, text
 
 | Stage | Providers                                                                | Typical defaults                               |
 | ----- | ------------------------------------------------------------------------ | ---------------------------------------------- |
-| STT   | ElevenLabs, Google, Gradium, OpenAI                                      | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
-| LLM   | Anthropic, Google, OpenAI                                                | e.g. `claude-sonnet-5-5`, `gpt-5.4`            |
+| STT   | Cohere, ElevenLabs, Google, Gradium, Mistral, Nvidia, OpenAI             | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
+| LLM   | Anthropic, Google, Nvidia, OpenAI                                        | e.g. `claude-sonnet-5-5`, `gpt-5.4`            |
 | TTS   | Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
 
 Gradium STT/TTS use WebSocket via [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk). Because Gradium’s token endpoint does not return CORS headers on the preflight, install and enable the [Access-Control-Allow-Origin](https://mybrowseraddon.com/access-control-allow-origin.html) browser extension before connecting.
+
+**Cohere Transcribe** runs on-device via [`@huggingface/transformers`](https://huggingface.co/docs/transformers.js) + WebGPU ([`onnx-community/cohere-transcribe-03-2026-ONNX`](https://huggingface.co/onnx-community/cohere-transcribe-03-2026-ONNX), no API key). Language must be selected (14 supported); VAD gates each turn before batch transcription.
 
 **Gradium Phonon** runs on-device via [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) (WASM worker + [`gradium/phonon-31m-en`](https://huggingface.co/gradium/phonon-31m-en) GGUF, no API key). Weights and voices cache in the browser after the first download.
 
@@ -147,6 +149,7 @@ Paste the **Basic (Base64)** credential from [Inworld Portal → API Keys](https
 - [`@elevenlabs/elevenlabs-js`](https://github.com/elevenlabs/elevenlabs-js) / [`@elevenlabs/client`](https://github.com/elevenlabs/elevenlabs-js) ElevenLabs Realtime, STT, TTS
 - [`@cartesia/cartesia-js`](https://github.com/cartesia-ai/cartesia-js) Cartesia TTS
 - [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk) Gradium STT / TTS
+- [`@huggingface/transformers`](https://huggingface.co/docs/transformers.js) Cohere / Mistral / Nvidia on-device models
 - [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) Gradium Phonon on-device TTS
 - [`@speechify/api`](https://docs.sws.speechify.com) Speechify TTS
 - [`@vpalmisano/webrtcperf-js`](https://github.com/vpalmisano/webrtcperf-js) for fake media, Q&A turns, and plots

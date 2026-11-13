@@ -17,6 +17,7 @@ import { getOptions as getCartesiaTTSOptions } from './cartesia/CartesiaTTS.vue'
 import { getOptions as getGradiumSTTOptions } from './gradium/GradiumSTT.vue';
 import { getOptions as getGradiumTTSOptions } from './gradium/GradiumTTS.vue';
 import { getOptions as getGradiumPhononTTSOptions } from './gradium/GradiumPhononTTS.vue';
+import { getOptions as getCohereSTTOptions } from './cohere/CohereSTT.vue';
 import { getOptions as getMistralVoxtralSTTOptions } from './mistral/MistralVoxtralSTT.vue';
 import { getOptions as getNvidiaNemotronSTTOptions } from './nvidia/NvidiaNemotronSTT.vue';
 import { getOptions as getNvidiaNemotronLLMOptions } from './nvidia/NvidiaNemotronLLM.vue';
@@ -36,6 +37,7 @@ import { getVadOptions } from '../PerfSettings.vue';
 import { GradiumSTT } from '../lib/providers/gradium/stt.ts';
 import { GradiumTTS } from '../lib/providers/gradium/tts.ts';
 import { GradiumPhononTTS } from '../lib/providers/gradium/phonon-tts.ts';
+import { CohereSTT } from '../lib/providers/cohere/stt.ts';
 import { MistralVoxtralSTT } from '../lib/providers/mistral/stt.ts';
 import { NvidiaNemotronSTT } from '../lib/providers/nvidia/stt.ts';
 import { NvidiaNemotronLLM } from '../lib/providers/nvidia/llm.ts';
@@ -43,6 +45,8 @@ import { NvidiaNemotronLLM } from '../lib/providers/nvidia/llm.ts';
 export function getSttProvider(): BaseProvider {
   const vadOptions = getVadOptions();
   switch (getSttProviderName()) {
+    case 'Cohere Transcribe':
+      return new CohereSTT(getCohereSTTOptions(), vadOptions);
     case 'Google':
       return new GoogleSTT(getGoogleSTTOptions(), vadOptions);
     case 'OpenAI':

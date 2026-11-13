@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { OpenAIRealtime } from './lib/providers/openai/realtime.ts';
 import OpenaiSettings, {
   getOptions as getOpenaiOptions,
@@ -92,7 +92,8 @@ const settingsComponent = computed(() => {
 
 let session: BaseProvider | null = null;
 
-const errorsQueue = ref<SnackbarMessage[]>([]);
+const notificationsQueue = ref<SnackbarMessage[]>([]);
+const progressNotifications = reactive(new Map<string, { text: string; value: number }>());
 
 async function onConnect() {
   if (connecting.value || connected.value) return;
@@ -128,8 +129,24 @@ async function onConnect() {
     }
     session.on('notify', (message: string) => appendEvent(message));
     session.on('error', (text: string) => {
-      errorsQueue.value.push({ text, color: 'error' });
+      notificationsQueue.value.push({ text, color: 'error' });
       appendEvent(`Error: ${text}`);
+    });
+    session.on('progress', (message: string, value: number) => {
+      const rounded = Math.round(value);
+      if (rounded >= 100) {
+        progressNotifications.delete(message);
+        return;
+      }
+      const existing = progressNotifications.get(message);
+      if (existing) {
+        existing.value = rounded;
+        return;
+      }
+      progressNotifications.set(message, {
+        text: message,
+        value: rounded,
+      });
     });
     session.on('marker', (timeMs: number, color: string, message: string) =>
       waveformRef.value?.addMarker(timeMs, color, message),
@@ -163,7 +180,7 @@ async function onConnect() {
     startWebrtcperfPlots(plotsEl.value);
   } catch (error) {
     log(`onConnect error: ${error}`);
-    errorsQueue.value.push({
+    notificationsQueue.value.push({
       text: error instanceof Error ? error.message : 'Unknown error',
       color: 'error',
     });
@@ -187,6 +204,7 @@ function onDisconnect(reason?: string) {
   inputStream.value = null;
   outputStream.value = null;
   connected.value = false;
+  progressNotifications.clear();
   setStartTime(0);
   stopWebrtcperfPlots();
 }
@@ -374,9 +392,26 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
         <div ref="plotsEl" class="d-flex flex-wrap ga-2 mb-4" id="webrtcperf-plots"></div>
       </v-container>
 
+      <v-snackbar
+        :model-value="progressNotifications.size > 0"
+        color="info"
+        :timeout="-1"
+        location="top"
+        multi-line
+      >
+        <div
+          v-for="[key, item] in progressNotifications"
+          :key="key"
+          class="d-flex align-center ga-2 mb-1"
+        >
+          <v-progress-circular :model-value="item.value" size="18" width="2" />
+          <span>{{ item.text }}</span>
+        </div>
+      </v-snackbar>
+
       <v-snackbar-queue
         ref="errorsSnackbarQueue"
-        v-model="errorsQueue"
+        v-model="notificationsQueue"
         :total-visible="5"
         closable
       ></v-snackbar-queue>

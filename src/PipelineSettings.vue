@@ -2,6 +2,7 @@
 import { defineReference } from './utils';
 
 const STT_PROVIDERS = [
+  'Cohere Transcribe',
   'ElevenLabs',
   'Google',
   'Gradium',
@@ -39,6 +40,7 @@ export function getTtsProvider(): (typeof TTS_PROVIDERS)[number] {
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import CohereSTTSettings from './providers/cohere/CohereSTT.vue';
 import ElevenLabsSTTSettings from './providers/elevenlabs/ElevenLabsSTT.vue';
 import GoogleSTTSettings from './providers/google/GoogleSTT.vue';
 import OpenaiSTTSettings from './providers/openai/OpenaiSTT.vue';
@@ -84,7 +86,8 @@ const step = ref('1');
             />
           </v-col>
         </v-row>
-        <ElevenLabsSTTSettings v-if="sttProvider === 'ElevenLabs'" />
+        <CohereSTTSettings v-if="sttProvider === 'Cohere Transcribe'" />
+        <ElevenLabsSTTSettings v-else-if="sttProvider === 'ElevenLabs'" />
         <GoogleSTTSettings v-else-if="sttProvider === 'Google'" />
         <OpenaiSTTSettings v-else-if="sttProvider === 'OpenAI'" />
         <GradiumSTTSettings v-else-if="sttProvider === 'Gradium'" />

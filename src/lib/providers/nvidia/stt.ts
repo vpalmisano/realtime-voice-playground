@@ -107,13 +107,14 @@ export class NvidiaNemotronSTT extends BaseProvider {
           const data = event.data;
           switch (data.type) {
             case 'progress':
-              log('downloading %s: %d', data.label, data.progress);
+              this.notifyProgress('Loading', data.progress);
               break;
             case 'status':
               log('status: %s', data.detail);
               break;
             case 'ready':
               this.ready = true;
+              this.notifyProgress('Loading', 100);
               worker.onmessage = event2 => this.handleWorkerMessage(event2.data);
               resolve();
               break;
@@ -171,7 +172,7 @@ export class NvidiaNemotronSTT extends BaseProvider {
   private handleWorkerMessage(data: NemotronAsrWorkerOutMessage) {
     switch (data.type) {
       case 'progress':
-        log('downloading %s: %d', data.label, data.progress);
+        this.notifyProgress('Loading', data.progress);
         break;
       case 'status':
         log('status: %s', data.detail);

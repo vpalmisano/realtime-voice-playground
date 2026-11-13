@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import debug from 'debug';
+import { throttle } from 'throttle-debounce';
 import {
   processInputAudioTrack,
   processOutputAudioTrackPcm,
@@ -31,6 +32,10 @@ export abstract class BaseProvider extends EventEmitter {
   private closeSourceAudio: () => void = () => {};
   private closeOutputAudio: () => void = () => {};
   private flushOutputAudio: () => void = () => {};
+
+  private emitProgress = throttle(250, (message: string, value: number) => {
+    this.emit('progress', message, value);
+  });
 
   abstract start(): Promise<void>;
   abstract sendMessage(message: string): void;
@@ -141,6 +146,7 @@ export abstract class BaseProvider extends EventEmitter {
       return;
     }
     this.running = false;
+    this.emitProgress.cancel({ upcomingOnly: true });
     log('stop', reason ?? '');
     try {
       this.closeSession(reason);
@@ -166,6 +172,10 @@ export abstract class BaseProvider extends EventEmitter {
 
   protected notifyError(message: string): void {
     this.emit('error', message);
+  }
+
+  protected notifyProgress(message: string, value: number): void {
+    this.emitProgress(message, value);
   }
 
   protected marker(timeMs: number, color: string, message: string): void {

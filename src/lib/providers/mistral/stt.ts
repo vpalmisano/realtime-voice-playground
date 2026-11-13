@@ -79,9 +79,9 @@ export class MistralVoxtralSTT extends BaseProvider {
 
     try {
       const progress_callback = (info: ProgressInfo) => {
-        const progress = info.status === 'progress' ? info.progress.toFixed(0) : 100;
-        const message = `Downloading ${progress}%`;
-        log('progress: %s', message);
+        if (info.status === 'progress') {
+          this.notifyProgress('Loading', info.progress);
+        }
       };
 
       const useWebGpu = this.device === 'webgpu';

@@ -15,10 +15,19 @@ export class PipelineSession extends BaseProvider {
     this.tts = tts;
     this.stt.on('notify', text => this.notify(`[${this.stt.constructor.name}] ${text}`));
     this.stt.on('error', text => this.notifyError(`[${this.stt.constructor.name}] ${text}`));
+    this.stt.on('progress', (message: string, value: number) =>
+      this.notifyProgress(`[${this.stt.constructor.name}] ${message}`, value),
+    );
     this.llm.on('notify', text => this.notify(`[${this.llm.constructor.name}] ${text}`));
     this.llm.on('error', text => this.notifyError(`[${this.llm.constructor.name}] ${text}`));
+    this.llm.on('progress', (message: string, value: number) =>
+      this.notifyProgress(`[${this.llm.constructor.name}] ${message}`, value),
+    );
     this.tts.on('notify', text => this.notify(`[${this.tts.constructor.name}] ${text}`));
     this.tts.on('error', text => this.notifyError(`[${this.tts.constructor.name}] ${text}`));
+    this.tts.on('progress', (message: string, value: number) =>
+      this.notifyProgress(`[${this.tts.constructor.name}] ${message}`, value),
+    );
   }
 
   async start() {

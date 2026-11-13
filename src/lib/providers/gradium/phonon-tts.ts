@@ -76,9 +76,9 @@ export class GradiumPhononTTS extends BaseProvider {
         },
         voices: [this.voiceId],
         onProgress: (progress: LoadProgress) => {
-          log(
-            `progress ${progress.file}: ${progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0}`,
-          );
+          if (progress.total) {
+            this.notifyProgress('Loading', Math.round((progress.loaded / progress.total) * 100));
+          }
         },
       });
       if (!this.running) {
