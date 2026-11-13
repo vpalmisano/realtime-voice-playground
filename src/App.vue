@@ -10,6 +10,9 @@ import GoogleSettings, {
 import ElevenLabsSettings, {
   getOptions as getElevenLabsOptions,
 } from './providers/elevenlabs/ElevenLabsRealtime.vue';
+import InworldSettings, {
+  getOptions as getInworldOptions,
+} from './providers/inworld/InworldRealtime.vue';
 import PipelineSettings, {
   getLlmProvider as getLlmProviderName,
   getSttProvider as getSttProviderName,
@@ -29,6 +32,7 @@ import PerfSettings, {
 import { defineReference } from './utils.ts';
 import { GoogleAIRealtime } from './lib/providers/google/realtime.ts';
 import { ElevenLabsRealtime } from './lib/providers/elevenlabs/realtime.ts';
+import { InworldRealtime } from './lib/providers/inworld/realtime.ts';
 import { OpenAILLM } from './lib/providers/openai/llm.ts';
 import LiveWaveform, { INPUT_COLOR, OUTPUT_COLOR } from './LiveWaveform.vue';
 import { PipelineSession } from './lib/pipeline.ts';
@@ -40,7 +44,13 @@ import type { SnackbarMessage } from 'vuetify/lib/components/VSnackbarQueue/VSna
 
 const log = debug('realtime:app');
 
-const PROVIDERS = ['Custom', 'ElevenLabs Realtime', 'Google Realtime', 'OpenAI Realtime'] as const;
+const PROVIDERS = [
+  'Custom',
+  'ElevenLabs Realtime',
+  'Google Realtime',
+  'Inworld Realtime',
+  'OpenAI Realtime',
+] as const;
 
 const plotsEl = ref<HTMLElement | null>(null);
 const waveformRef = ref<{
@@ -73,6 +83,8 @@ const settingsComponent = computed(() => {
       return GoogleSettings;
     case 'ElevenLabs Realtime':
       return ElevenLabsSettings;
+    case 'Inworld Realtime':
+      return InworldSettings;
     default:
       return PipelineSettings;
   }
@@ -102,6 +114,9 @@ async function onConnect() {
       case 'ElevenLabs Realtime':
         session = new ElevenLabsRealtime(getElevenLabsOptions(), getVadOptions());
         break;
+      case 'Inworld Realtime':
+        session = new InworldRealtime(getInworldOptions(), getVadOptions());
+        break;
       default: {
         session = new PipelineSession(getSttProvider(), getLlmProvider(), getTtsProvider());
         break;
@@ -112,7 +127,10 @@ async function onConnect() {
       throw new Error('Failed to create session');
     }
     session.on('notify', (message: string) => appendEvent(message));
-    session.on('error', (text: string) => errorsQueue.value.push({ text, color: 'error' }));
+    session.on('error', (text: string) => {
+      errorsQueue.value.push({ text, color: 'error' });
+      appendEvent(`Error: ${text}`);
+    });
     session.on('marker', (timeMs: number, color: string, message: string) =>
       waveformRef.value?.addMarker(timeMs, color, message),
     );

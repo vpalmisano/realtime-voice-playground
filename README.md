@@ -2,7 +2,7 @@
 
 [Live demo](https://vpalmisano.github.io/realtime-voice-playground/) · [Hugging Face Space](https://huggingface.co/spaces/vpalmisano/realtime-voice-playground)
 
-An interactive webapp for trying voice AI — either **end-to-end realtime** models (OpenAI, Google, ElevenLabs) or a **custom STT → LLM → TTS pipeline** with different providers.
+An interactive webapp for trying voice AI — either **end-to-end realtime** models (OpenAI, Google, ElevenLabs, Inworld) or a **custom STT → LLM → TTS pipeline** with different providers.
 Configure options, chat by text or mic, and optionally run scripted Q&A with [webrtcperf-js](https://github.com/vpalmisano/webrtcperf-js).
 
 ![Demo](public/docs/demo.png)
@@ -10,13 +10,13 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 ## Features
 
 - **Modes**:
-  - **OpenAI / Google / ElevenLabs Realtime** — single-provider voice-to-voice sessions
+  - **OpenAI / Google / ElevenLabs / Inworld Realtime** — single-provider voice-to-voice sessions
   - **Custom** — compose a pipeline from separate STT, LLM, and TTS providers
 - **Custom pipeline providers**:
   - **STT**: ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
   - **LLM**: Anthropic, Google, Nvidia (local), OpenAI
   - **TTS**: Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
-- **Transports**: WebSocket or WebRTC (OpenAI Realtime); WebSocket (Google, ElevenLabs, Gradium)
+- **Transports**: WebSocket or WebRTC (OpenAI / Inworld Realtime); WebSocket (Google, ElevenLabs, Gradium)
 - **Session options**: model, voice, transcription, turn detection, and system instructions
 - **Chat**: send text messages or speak via the microphone
 - **Live waveform**: input/output audio visualization while connected
@@ -30,15 +30,16 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 - Node.js 24+
 - API keys for the providers you use:
 
-| Provider   | Where to get a key                                                                 | Notes                                       |
-| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------- |
-| OpenAI     | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)               | Realtime, STT, LLM, and/or TTS              |
-| Anthropic  | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | LLM (Custom pipeline)                       |
-| Google     | [aistudio.google.com/apikey](https://aistudio.google.com/apikey)                   | Gemini Live, STT, LLM, and/or TTS           |
-| ElevenLabs | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) | Realtime needs `convai_write`; also STT/TTS |
-| Gradium    | [gradium.ai](https://gradium.ai)                                                   | STT/TTS (Custom pipeline)                   |
-| Cartesia   | [cartesia.ai](https://cartesia.ai)                                                 | TTS (Custom pipeline)                       |
-| Speechify  | [console.sws.speechify.com](https://console.sws.speechify.com)                     | TTS (Custom pipeline)                       |
+| Provider   | Where to get a key                                                                 | Notes                                         |
+| ---------- | ---------------------------------------------------------------------------------- | --------------------------------------------- |
+| OpenAI     | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)               | Realtime, STT, LLM, and/or TTS                |
+| Anthropic  | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | LLM (Custom pipeline)                         |
+| Google     | [aistudio.google.com/apikey](https://aistudio.google.com/apikey)                   | Gemini Live, STT, LLM, and/or TTS             |
+| ElevenLabs | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) | Realtime needs `convai_write`; also STT/TTS   |
+| Inworld    | [platform.inworld.ai](https://platform.inworld.ai)                                 | Realtime WebRTC/WebSocket; Basic (Base64) key |
+| Gradium    | [gradium.ai](https://gradium.ai)                                                   | STT/TTS (Custom pipeline)                     |
+| Cartesia   | [cartesia.ai](https://cartesia.ai)                                                 | TTS (Custom pipeline)                         |
+| Speechify  | [console.sws.speechify.com](https://console.sws.speechify.com)                     | TTS (Custom pipeline)                         |
 
 ## Quick start
 
@@ -53,12 +54,12 @@ Open the URL Vite prints (default `http://localhost:5173`), choose a **Provider*
 
 ### Shared
 
-| Control                  | What it does                                                             |
-| ------------------------ | ------------------------------------------------------------------------ |
-| **Provider**             | `Custom`, `ElevenLabs Realtime`, `Google Realtime`, or `OpenAI Realtime` |
-| **Use fake audio input** | Override mic with scripted clips; shows audio-input buttons              |
-| **Save output audio**    | Write assistant PCM to WAV downloads                                     |
-| **Q&A estimator**        | Min talking/silent duration and detector (`simple` / `silero`)           |
+| Control                  | What it does                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| **Provider**             | `Custom`, `ElevenLabs Realtime`, `Google Realtime`, `Inworld Realtime`, or `OpenAI Realtime` |
+| **Use fake audio input** | Override mic with scripted clips; shows audio-input buttons                                  |
+| **Save output audio**    | Write assistant PCM to WAV downloads                                                         |
+| **Q&A estimator**        | Min talking/silent duration and detector (`simple` / `silero`)                               |
 
 With fake audio enabled and connected, click a prompt under **Audio inputs** to inject that clip as the microphone stream. Turn timing is logged in the messages panel.
 
@@ -109,6 +110,22 @@ Uses the [OpenAI Realtime–compatible](https://elevenlabs.io/docs/eleven-agents
 | **Turn detection** | `semantic_vad` (eagerness) or `server_vad` (threshold, …)       |
 
 The API key needs the **`convai_write`** permission (enable Conversational AI write access, or disable key restrictions) under [API Keys](https://elevenlabs.io/app/settings/api-keys).
+
+### Inworld Realtime
+
+Supports [WebRTC](https://docs.inworld.ai/realtime/quickstart-webrtc) and [WebSocket](https://docs.inworld.ai/realtime/quickstart-websocket). The app mints a session token from your Base64 API key. WebRTC exchanges SDP with `/v1/realtime/calls` and uses the `oai-events` data channel; WebSocket connects to `/api/v1/realtime/session` with the `bearer_<token>` subprotocol and streams base64 PCM16 @ 24 kHz.
+
+| Control                 | What it does                                                             |
+| ----------------------- | ------------------------------------------------------------------------ |
+| **Transport**           | `webrtc` (default) or `websocket`                                        |
+| **LLM model**           | e.g. `openai/gpt-4o-mini` (default), `google-ai-studio/gemini-2.5-flash` |
+| **TTS model**           | `inworld-tts-2` (default) or `inworld-tts-2-flash`                       |
+| **Voice**               | Assistant voice (e.g. `Clive`, `Dennis`, …)                              |
+| **Transcription model** | `inworld/inworld-stt-1`                                                  |
+| **Context**             | System instructions                                                      |
+| **Turn detection**      | `semantic_vad` (eagerness) or `server_vad` (threshold, …)                |
+
+Paste the **Basic (Base64)** credential from [Inworld Portal → API Keys](https://platform.inworld.ai).
 
 ## Scripts
 
