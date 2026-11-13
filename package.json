@@ -7,12 +7,20 @@
   "keywords": [
     "voice",
     "ai",
+    "anthropic",
     "realtime",
     "models",
     "openai",
     "google",
+    "gemini",
+    "gradium",
+    "mistral",
+    "nvidia",
     "elevenlabs",
-    "inworld"
+    "inworld",
+    "speechify",
+    "cartesia",
+    "phonon"
   ],
   "author": "Vittorio Palmisano",
   "url": "https://vpalmisano.github.io/realtime-voice-playground",
