@@ -1,12 +1,7 @@
-import {
-  AsrEngine,
-  LANG_TO_ID,
-  type AsrEngineOptions,
-  type Session,
-} from '@jeffpeng3/nemotron-asr-core';
-import { AwaitQueue, AwaitQueueRemovedTaskError, AwaitQueueStoppedError } from 'awaitqueue';
+import { LANG_TO_ID } from '@jeffpeng3/nemotron-asr-core';
 import { BaseProvider, type VadOptions } from '../base.ts';
 import debug from 'debug';
+import type { NemotronAsrWorkerInMessage, NemotronAsrWorkerOutMessage } from './stt.worker.ts';
 
 const log = debug('realtime:nvidia-nemotron-stt');
 
@@ -42,11 +37,11 @@ export class NvidiaNemotronSTT extends BaseProvider {
   private readonly profile: NemotronProfile;
   private readonly beamWidth: number;
   private readonly chunkMs: number;
-  private engine: AsrEngine | null = null;
-  private session: Session | null = null;
-  private readonly asyncQueue = new AwaitQueue();
+  private worker: Worker | null = null;
+  private ready = false;
   private stopRequested = false;
   private flushing = false;
+  private hasSession = false;
 
   constructor(options: NvidiaNemotronSTTOptions = {}, vadOptions?: VadOptions) {
     super();
@@ -56,6 +51,29 @@ export class NvidiaNemotronSTT extends BaseProvider {
     this.beamWidth = Math.max(1, options.beamWidth ?? DEFAULT_BEAM_WIDTH);
     this.chunkMs = options.chunkMs ?? 80;
     this.vadOptions = vadOptions;
+  }
+
+  private post(message: NemotronAsrWorkerInMessage, transfer?: Transferable[]) {
+    if (!this.worker) {
+      return;
+    }
+    if (transfer?.length) {
+      this.worker.postMessage(message, transfer);
+    } else {
+      this.worker.postMessage(message);
+    }
+  }
+
+  private terminateWorker() {
+    if (!this.worker) {
+      return;
+    }
+    this.worker.onmessage = null;
+    this.worker.onerror = null;
+    this.worker.terminate();
+    this.worker = null;
+    this.ready = false;
+    this.hasSession = false;
   }
 
   async start() {
@@ -69,34 +87,53 @@ export class NvidiaNemotronSTT extends BaseProvider {
     this.running = true;
     this.stopRequested = false;
     this.flushing = false;
-    this.session = null;
+    this.hasSession = false;
+    this.ready = false;
     log('start profile=%s language=%s langId=%d', this.profile, this.language, this.langId);
     this.notify(`Loading NVIDIA Nemotron 3.5 ASR (${MODEL_ID}, profile=${this.profile})...`);
 
     try {
-      const engineOptions: AsrEngineOptions = {
-        profile: this.profile,
-        beamWidth: this.beamWidth,
-      };
+      await new Promise<void>((resolve, reject) => {
+        const worker = new Worker(new URL('./stt.worker.ts', import.meta.url), {
+          type: 'module',
+        });
+        this.worker = worker;
 
-      this.engine = new AsrEngine(
-        {
-          progress: (label, loaded, total, cached) => {
-            if (cached) {
-              return;
-            }
-            const pct = total > 0 ? Math.round((loaded / total) * 100) : 0;
-            log(`downloading ${label}: ${pct}`);
-          },
-          status: detail => {
-            log('status: %s', detail);
-          },
-        },
-        engineOptions,
-      );
+        worker.onerror = event => {
+          reject(new Error(event.message || 'NVIDIA Nemotron ASR worker failed'));
+        };
 
-      await this.engine.init();
+        worker.onmessage = (event: MessageEvent<NemotronAsrWorkerOutMessage>) => {
+          const data = event.data;
+          switch (data.type) {
+            case 'progress':
+              log('downloading %s: %d', data.label, data.progress);
+              break;
+            case 'status':
+              log('status: %s', data.detail);
+              break;
+            case 'ready':
+              this.ready = true;
+              worker.onmessage = event2 => this.handleWorkerMessage(event2.data);
+              resolve();
+              break;
+            case 'error':
+              reject(new Error(data.error));
+              break;
+            default:
+              break;
+          }
+        };
+
+        this.post({
+          type: 'load',
+          profile: this.profile,
+          beamWidth: this.beamWidth,
+        });
+      });
+
       if (!this.running) {
+        this.terminateWorker();
         return;
       }
 
@@ -121,7 +158,7 @@ export class NvidiaNemotronSTT extends BaseProvider {
       });
       this.sourceAudioVad?.on('stop', () => {
         log('vad stop');
-        void this.flushTurn();
+        this.flushTurn();
       });
     } catch (error) {
       log('start error: %o', error);
@@ -131,89 +168,81 @@ export class NvidiaNemotronSTT extends BaseProvider {
     }
   }
 
-  private createSession() {
-    if (!this.engine || this.session || this.flushing || this.stopRequested || !this.running) {
+  private handleWorkerMessage(data: NemotronAsrWorkerOutMessage) {
+    switch (data.type) {
+      case 'progress':
+        log('downloading %s: %d', data.label, data.progress);
+        break;
+      case 'status':
+        log('status: %s', data.detail);
+        break;
+      case 'partial':
+        if (this.running) {
+          log('partial: %s', data.text);
+        }
+        break;
+      case 'final':
+        this.onSessionComplete(data.text);
+        break;
+      case 'session-ended':
+        this.onSessionComplete('');
+        break;
+      case 'error':
+        if (!this.running || this.stopRequested) {
+          return;
+        }
+        log('worker error: %s', data.error);
+        this.notify(`> Error: ${data.error}`);
+        this.stop('NVIDIA Nemotron STT worker failed');
+        break;
+      default:
+        break;
+    }
+  }
+
+  private onSessionComplete(text: string) {
+    this.hasSession = false;
+    this.flushing = false;
+    if (!this.running || this.stopRequested) {
       return;
     }
-    this.session = this.engine.session(this.langId, false);
+    if (text) {
+      log('final: %s', text);
+      this.emit('text', text);
+    }
+  }
+
+  private createSession() {
+    if (
+      !this.worker ||
+      !this.ready ||
+      this.hasSession ||
+      this.flushing ||
+      this.stopRequested ||
+      !this.running
+    ) {
+      return;
+    }
+    this.hasSession = true;
+    this.post({ type: 'startSession', langId: this.langId });
     log('session created langId=%d', this.langId);
   }
 
   private enqueueAudio(samples: Float32Array) {
-    if (!samples.length || !this.session || this.flushing) {
+    if (!samples.length || !this.hasSession || this.flushing || !this.ready) {
       return;
     }
     const chunk = samples.slice();
-    void this.asyncQueue
-      .push(async () => {
-        if (!this.session || this.stopRequested || !this.running) {
-          return;
-        }
-        const partials = await this.session.feed(chunk);
-        if (!partials?.length) {
-          return;
-        }
-        for (const partial of partials) {
-          const text = partial.text.trim();
-          if (text) {
-            log('partial: %s', text);
-          }
-        }
-      }, 'nemotron-feed')
-      .catch(error => {
-        if (
-          error instanceof AwaitQueueStoppedError ||
-          error instanceof AwaitQueueRemovedTaskError ||
-          this.stopRequested ||
-          !this.running
-        ) {
-          return;
-        }
-        log('feed error: %o', error);
-        this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        this.stop('NVIDIA Nemotron STT feed failed');
-      });
+    this.post({ type: 'feed', samples: chunk }, [chunk.buffer]);
   }
 
-  private async flushTurn() {
-    if (this.flushing || this.stopRequested || !this.running) {
+  private flushTurn() {
+    if (this.flushing || this.stopRequested || !this.running || !this.hasSession) {
       return;
     }
 
     this.flushing = true;
-    try {
-      await this.asyncQueue.push(async () => {
-        const session = this.session;
-        if (!session || this.stopRequested || !this.running) {
-          return;
-        }
-        this.session = null;
-        const result = await session.end();
-        if (this.stopRequested || !this.running) {
-          return;
-        }
-        const text = result?.text.trim() ?? '';
-        if (text) {
-          log('final: %s', text);
-          this.emit('text', text);
-        }
-      }, 'nemotron-flush');
-    } catch (error) {
-      if (
-        error instanceof AwaitQueueStoppedError ||
-        error instanceof AwaitQueueRemovedTaskError ||
-        this.stopRequested ||
-        !this.running
-      ) {
-        return;
-      }
-      log('flush error: %o', error);
-      this.notify(`> Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      this.stop('NVIDIA Nemotron STT flush failed');
-    } finally {
-      this.session = null;
-      this.flushing = false;
-    }
+    this.post({ type: 'endSession' });
   }
 
   sendMessage() {
@@ -224,12 +253,8 @@ export class NvidiaNemotronSTT extends BaseProvider {
     log('closeSession %s', reason ?? '');
     this.stopRequested = true;
     this.flushing = true;
-    const session = this.session;
-    this.session = null;
-    this.asyncQueue.stop();
-    if (session) {
-      void session.end().catch(() => {});
-    }
-    this.engine = null;
+    this.hasSession = false;
+    this.post({ type: 'dispose' });
+    this.terminateWorker();
   }
 }

@@ -10,18 +10,22 @@ export type GoogleLLMOptions = {
   model?: string;
   context?: string;
   maxUserMessages?: number;
+  usePromptCache?: boolean;
   textAggregation?: LLMTextAggregation;
 };
 
 export const DEFAULT_MODEL = 'gemini-3.8-flash';
+export const DEFAULT_USE_PROMPT_CACHE = true;
 
 export class GoogleLLM extends BaseProvider {
   private readonly client: GoogleGenAI;
   private readonly model: string;
   private readonly context: string;
   private readonly maxUserMessages: number;
+  private readonly usePromptCache: boolean;
   private readonly textAggregator: TextAggregator;
   private readonly messages: Content[] = [];
+  private cachedContentName: string | null = null;
   private abortController: AbortController | null = null;
 
   constructor(options: GoogleLLMOptions) {
@@ -30,16 +34,55 @@ export class GoogleLLM extends BaseProvider {
     this.model = options.model ?? DEFAULT_MODEL;
     this.context = options.context ?? DEFAULT_CONTEXT;
     this.maxUserMessages = options.maxUserMessages ?? 20;
+    this.usePromptCache = options.usePromptCache ?? DEFAULT_USE_PROMPT_CACHE;
     this.textAggregator = new TextAggregator(options.textAggregation);
     this.textAggregator.on('text', text => this.emit('text', text));
+  }
+
+  private async ensurePromptCache(): Promise<void> {
+    if (!this.usePromptCache || this.cachedContentName || !this.context.trim()) {
+      return;
+    }
+    try {
+      const cache = await this.client.caches.create({
+        model: this.model,
+        config: {
+          systemInstruction: this.context,
+          ttl: '3600s',
+          displayName: `realtime-google-llm-${crypto.randomUUID().slice(0, 8)}`,
+        },
+      });
+      if (cache.name) {
+        this.cachedContentName = cache.name;
+        log('prompt cache created name=%s', cache.name);
+      }
+    } catch (error) {
+      log('prompt cache create skipped: %o', error);
+      this.cachedContentName = null;
+    }
+  }
+
+  private async clearPromptCache(): Promise<void> {
+    const name = this.cachedContentName;
+    this.cachedContentName = null;
+    if (!name) {
+      return;
+    }
+    try {
+      await this.client.caches.delete({ name });
+      log('prompt cache deleted name=%s', name);
+    } catch (error) {
+      log('prompt cache delete error: %o', error);
+    }
   }
 
   async start() {
     if (this.running) {
       return;
     }
-    log('start model=%s', this.model);
+    log('start model=%s promptCache=%s', this.model, this.usePromptCache);
     this.running = true;
+    await this.ensurePromptCache();
     this.notify(`Google LLM ready with model ${this.model}`);
   }
 
@@ -71,7 +114,9 @@ export class GoogleLLM extends BaseProvider {
         model: this.model,
         contents: this.messages,
         config: {
-          systemInstruction: this.context,
+          ...(this.cachedContentName
+            ? { cachedContent: this.cachedContentName }
+            : { systemInstruction: this.context }),
           abortSignal: abortController.signal,
         },
       });
@@ -79,6 +124,7 @@ export class GoogleLLM extends BaseProvider {
       let assistantText = '';
       let promptTokens = 0;
       let responseTokens = 0;
+      let cachedTokens = 0;
 
       for await (const chunk of stream) {
         if (chunk.text) {
@@ -90,11 +136,15 @@ export class GoogleLLM extends BaseProvider {
         if (usage) {
           promptTokens = usage.promptTokenCount ?? promptTokens;
           responseTokens = usage.candidatesTokenCount ?? responseTokens;
+          cachedTokens = usage.cachedContentTokenCount ?? cachedTokens;
         }
       }
 
       this.promptTokenCount += promptTokens;
       this.responseTokenCount += responseTokens;
+      if (this.usePromptCache) {
+        log('prompt cache cached_tokens=%d input=%d', cachedTokens, promptTokens);
+      }
 
       assistantText = assistantText.trim();
 
@@ -124,5 +174,6 @@ export class GoogleLLM extends BaseProvider {
     this.abortController?.abort();
     this.abortController = null;
     this.messages.length = 0;
+    void this.clearPromptCache();
   }
 }

@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import {
   DEFAULT_MODEL,
   DEFAULT_MAX_TOKENS,
+  DEFAULT_USE_PROMPT_CACHE,
   type AnthropicLLMOptions,
 } from '../../lib/providers/anthropic/llm';
 import { ANTHROPIC_LLM_FALLBACK_MODELS, fetchModels } from '../../lib/providers/anthropic/utils';
@@ -24,6 +25,10 @@ const models = ref<string[]>([...ANTHROPIC_LLM_FALLBACK_MODELS]);
 const modelsLoading = ref(false);
 const model = defineReference<string>(`${PREFIX}Model`, DEFAULT_MODEL);
 const maxTokens = defineReference<number>(`${PREFIX}MaxTokens`, DEFAULT_MAX_TOKENS);
+const usePromptCache = defineReference<boolean>(
+  `${PREFIX}UsePromptCache`,
+  DEFAULT_USE_PROMPT_CACHE,
+);
 const context = defineReference(`${PREFIX}Context`, DEFAULT_CONTEXT);
 const textAggregation = defineReference(
   `${PREFIX}TextAggregation`,
@@ -55,6 +60,7 @@ export function getOptions(): AnthropicLLMOptions {
     model: model.value,
     apiKey: apiKey.value,
     maxTokens: maxTokens.value,
+    usePromptCache: usePromptCache.value,
     context: context.value || undefined,
     textAggregation: textAggregation.value,
   };
@@ -113,6 +119,14 @@ onMounted(() => {
         :items="[...LLM_TEXT_AGGREGATIONS]"
         label="Text Aggregation"
         variant="outlined"
+        density="comfortable"
+        hide-details
+      />
+    </v-col>
+    <v-col cols="12" md="6" lg="4" class="d-flex align-center">
+      <v-checkbox
+        v-model="usePromptCache"
+        label="Prompt cache"
         density="comfortable"
         hide-details
       />

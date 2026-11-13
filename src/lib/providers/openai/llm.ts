@@ -11,18 +11,22 @@ export type OpenAILLMOptions = {
   model?: string;
   context?: string;
   maxUserMessages?: number;
+  usePromptCache?: boolean;
   textAggregation?: LLMTextAggregation;
 };
 
 export const DEFAULT_MODEL = 'gpt-5.4';
+export const DEFAULT_USE_PROMPT_CACHE = true;
 
 export class OpenAILLM extends BaseProvider {
   private readonly client: OpenAI;
   private readonly model: string;
   private readonly context: string;
   private readonly maxUserMessages: number;
+  private readonly usePromptCache: boolean;
   private readonly textAggregator: TextAggregator;
   private readonly messages: ResponseInputItem[] = [];
+  private promptCacheKey: string | null = null;
   private abortController: AbortController | null = null;
 
   constructor(options: OpenAILLMOptions) {
@@ -34,6 +38,7 @@ export class OpenAILLM extends BaseProvider {
     this.model = options.model ?? DEFAULT_MODEL;
     this.context = options.context ?? DEFAULT_CONTEXT;
     this.maxUserMessages = options.maxUserMessages ?? 20;
+    this.usePromptCache = options.usePromptCache ?? DEFAULT_USE_PROMPT_CACHE;
     this.textAggregator = new TextAggregator(options.textAggregation);
     this.textAggregator.on('text', text => this.emit('text', text));
   }
@@ -42,8 +47,11 @@ export class OpenAILLM extends BaseProvider {
     if (this.running) {
       return;
     }
-    log('start model=%s', this.model);
+    log('start model=%s promptCache=%s', this.model, this.usePromptCache);
     this.running = true;
+    if (this.usePromptCache) {
+      this.promptCacheKey = `realtime-openai-llm:${crypto.randomUUID()}`;
+    }
     this.notify(`OpenAI LLM ready with model ${this.model}`);
   }
 
@@ -76,6 +84,7 @@ export class OpenAILLM extends BaseProvider {
           model: this.model,
           input: [{ role: 'system', content: this.context }, ...this.messages],
           stream: true,
+          ...(this.promptCacheKey ? { prompt_cache_key: this.promptCacheKey } : {}),
         },
         { signal: abortController.signal },
       );
@@ -92,6 +101,10 @@ export class OpenAILLM extends BaseProvider {
           if (usage) {
             this.promptTokenCount += usage.input_tokens;
             this.responseTokenCount += usage.output_tokens;
+            const cached = usage.input_tokens_details?.cached_tokens;
+            if (cached != null) {
+              log('prompt cache cached_tokens=%d input=%d', cached, usage.input_tokens);
+            }
           }
           assistantText = assistantText.trim();
         } else if (event.type === 'error') {
@@ -124,6 +137,7 @@ export class OpenAILLM extends BaseProvider {
     this.textAggregator.clear();
     this.abortController?.abort();
     this.abortController = null;
+    this.promptCacheKey = null;
     this.messages.length = 0;
   }
 }

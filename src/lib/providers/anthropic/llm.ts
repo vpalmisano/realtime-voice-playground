@@ -12,11 +12,13 @@ export type AnthropicLLMOptions = {
   context?: string;
   maxUserMessages?: number;
   maxTokens?: number;
+  usePromptCache?: boolean;
   textAggregation?: LLMTextAggregation;
 };
 
 export const DEFAULT_MODEL = 'claude-sonnet-5-5';
 export const DEFAULT_MAX_TOKENS = 1024;
+export const DEFAULT_USE_PROMPT_CACHE = true;
 
 export class AnthropicLLM extends BaseProvider {
   private readonly client: Anthropic;
@@ -24,6 +26,7 @@ export class AnthropicLLM extends BaseProvider {
   private readonly context: string;
   private readonly maxUserMessages: number;
   private readonly maxTokens: number;
+  private readonly usePromptCache: boolean;
   private readonly textAggregator: TextAggregator;
   private readonly messages: MessageParam[] = [];
   private abortController: AbortController | null = null;
@@ -38,6 +41,7 @@ export class AnthropicLLM extends BaseProvider {
     this.context = options.context ?? DEFAULT_CONTEXT;
     this.maxUserMessages = options.maxUserMessages ?? 20;
     this.maxTokens = options.maxTokens ?? DEFAULT_MAX_TOKENS;
+    this.usePromptCache = options.usePromptCache ?? DEFAULT_USE_PROMPT_CACHE;
     this.textAggregator = new TextAggregator(options.textAggregation);
     this.textAggregator.on('text', text => this.emit('text', text));
   }
@@ -46,7 +50,7 @@ export class AnthropicLLM extends BaseProvider {
     if (this.running) {
       return;
     }
-    log('start model=%s', this.model);
+    log('start model=%s promptCache=%s', this.model, this.usePromptCache);
     this.running = true;
     this.notify(`Anthropic LLM ready with model ${this.model}`);
   }
@@ -75,11 +79,21 @@ export class AnthropicLLM extends BaseProvider {
     }
 
     try {
+      const system = this.usePromptCache
+        ? [
+            {
+              type: 'text' as const,
+              text: this.context,
+              cache_control: { type: 'ephemeral' as const },
+            },
+          ]
+        : this.context;
+
       const stream = await this.client.messages.create(
         {
           model: this.model,
           max_tokens: this.maxTokens,
-          system: this.context,
+          system,
           messages: this.messages,
           stream: true,
         },
@@ -89,6 +103,8 @@ export class AnthropicLLM extends BaseProvider {
       let assistantText = '';
       let promptTokens = 0;
       let responseTokens = 0;
+      let cacheReadTokens = 0;
+      let cacheCreationTokens = 0;
 
       for await (const event of stream) {
         if (
@@ -99,17 +115,34 @@ export class AnthropicLLM extends BaseProvider {
           assistantText += event.delta.text;
           this.textAggregator.append(event.delta.text);
         } else if (event.type === 'message_start') {
-          promptTokens = event.message.usage.input_tokens ?? promptTokens;
+          const usage = event.message.usage;
+          promptTokens = usage.input_tokens ?? promptTokens;
+          cacheReadTokens = usage.cache_read_input_tokens ?? cacheReadTokens;
+          cacheCreationTokens = usage.cache_creation_input_tokens ?? cacheCreationTokens;
         } else if (event.type === 'message_delta') {
           responseTokens = event.usage.output_tokens ?? responseTokens;
           if (event.usage.input_tokens != null) {
             promptTokens = event.usage.input_tokens;
+          }
+          if (event.usage.cache_read_input_tokens != null) {
+            cacheReadTokens = event.usage.cache_read_input_tokens;
+          }
+          if (event.usage.cache_creation_input_tokens != null) {
+            cacheCreationTokens = event.usage.cache_creation_input_tokens;
           }
         }
       }
 
       this.promptTokenCount += promptTokens;
       this.responseTokenCount += responseTokens;
+      if (this.usePromptCache) {
+        log(
+          'prompt cache read=%d creation=%d input=%d',
+          cacheReadTokens,
+          cacheCreationTokens,
+          promptTokens,
+        );
+      }
 
       assistantText = assistantText.trim();
       if (assistantText) {

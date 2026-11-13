@@ -1,6 +1,10 @@
 <script lang="ts">
 import { ref } from 'vue';
-import { DEFAULT_MODEL, type GoogleLLMOptions } from '../../lib/providers/google/llm';
+import {
+  DEFAULT_MODEL,
+  DEFAULT_USE_PROMPT_CACHE,
+  type GoogleLLMOptions,
+} from '../../lib/providers/google/llm';
 import { GOOGLE_LLM_FALLBACK_MODELS, fetchModels } from '../../lib/providers/google/utils';
 import { defineReference } from '../../utils';
 import { DEFAULT_CONTEXT } from '../../lib/providers/base';
@@ -19,6 +23,10 @@ const apiKey = defineReference<string>(`${PREFIX}ApiKey`, '', [], v => {
 const models = ref<string[]>([...GOOGLE_LLM_FALLBACK_MODELS]);
 const modelsLoading = ref(false);
 const model = defineReference<string>(`${PREFIX}Model`, DEFAULT_MODEL);
+const usePromptCache = defineReference<boolean>(
+  `${PREFIX}UsePromptCache`,
+  DEFAULT_USE_PROMPT_CACHE,
+);
 const context = defineReference(`${PREFIX}Context`, DEFAULT_CONTEXT);
 const textAggregation = defineReference(
   `${PREFIX}TextAggregation`,
@@ -49,6 +57,7 @@ export function getOptions(): GoogleLLMOptions {
   return {
     model: model.value,
     apiKey: apiKey.value,
+    usePromptCache: usePromptCache.value,
     context: context.value || undefined,
     textAggregation: textAggregation.value,
   };
@@ -94,6 +103,14 @@ onMounted(() => {
         :items="[...LLM_TEXT_AGGREGATIONS]"
         label="Text Aggregation"
         variant="outlined"
+        density="comfortable"
+        hide-details
+      />
+    </v-col>
+    <v-col cols="12" md="6" lg="4" class="d-flex align-center">
+      <v-checkbox
+        v-model="usePromptCache"
+        label="Prompt cache"
         density="comfortable"
         hide-details
       />
