@@ -17,6 +17,7 @@ export type GradiumTTSOptions = {
 };
 
 export class GradiumTTS extends BaseProvider {
+  readonly name = 'GradiumTTS';
   private readonly client: GradiumClient;
   private readonly model: string;
   private readonly voiceId: string;

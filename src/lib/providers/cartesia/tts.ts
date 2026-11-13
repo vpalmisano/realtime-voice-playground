@@ -18,6 +18,7 @@ export type CartesiaTTSOptions = {
 };
 
 export class CartesiaTTS extends BaseProvider {
+  readonly name = 'CartesiaTTS';
   private readonly client: Cartesia;
   private readonly model: string;
   private readonly voiceId: string;

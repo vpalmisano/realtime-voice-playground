@@ -44,6 +44,7 @@ export type CohereSTTOptions = {
 };
 
 export class CohereSTT extends BaseProvider {
+  readonly name = 'CohereSTT';
   private readonly device: CohereDevice;
   private readonly language: CohereLanguage;
   private readonly maxNewTokens: number;

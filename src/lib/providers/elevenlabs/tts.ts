@@ -29,6 +29,7 @@ async function createEphemeralClientSecret(apiKey: string): Promise<string> {
 }
 
 export class ElevenLabsTTS extends BaseProvider {
+  readonly name = 'ElevenLabsTTS';
   private readonly apiKey: string;
   private readonly voiceId: string;
   private readonly modelId: string;

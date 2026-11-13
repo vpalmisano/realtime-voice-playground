@@ -95,6 +95,7 @@ async function createEphemeralClientSecret(
 }
 
 export class ElevenLabsRealtime extends BaseProvider {
+  readonly name = 'ElevenLabsRealtime';
   private readonly model: string;
   private readonly voice: string;
   private readonly apiKey: string;

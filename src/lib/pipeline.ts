@@ -4,6 +4,7 @@ import { BaseProvider } from './providers/base';
 const log = debug('realtime:pipeline');
 
 export class PipelineSession extends BaseProvider {
+  readonly name = 'Pipeline';
   private readonly stt: BaseProvider;
   private readonly llm: BaseProvider;
   private readonly tts: BaseProvider;
@@ -13,20 +14,20 @@ export class PipelineSession extends BaseProvider {
     this.stt = stt;
     this.llm = llm;
     this.tts = tts;
-    this.stt.on('notify', text => this.notify(`[${this.stt.constructor.name}] ${text}`));
-    this.stt.on('error', text => this.notifyError(`[${this.stt.constructor.name}] ${text}`));
+    this.stt.on('notify', text => this.notify(`[${this.stt.name}] ${text}`));
+    this.stt.on('error', text => this.notifyError(`[${this.stt.name}] ${text}`));
     this.stt.on('progress', (message: string, value: number) =>
-      this.notifyProgress(`[${this.stt.constructor.name}] ${message}`, value),
+      this.notifyProgress(`[${this.stt.name}] ${message}`, value),
     );
-    this.llm.on('notify', text => this.notify(`[${this.llm.constructor.name}] ${text}`));
-    this.llm.on('error', text => this.notifyError(`[${this.llm.constructor.name}] ${text}`));
+    this.llm.on('notify', text => this.notify(`[${this.llm.name}] ${text}`));
+    this.llm.on('error', text => this.notifyError(`[${this.llm.name}] ${text}`));
     this.llm.on('progress', (message: string, value: number) =>
-      this.notifyProgress(`[${this.llm.constructor.name}] ${message}`, value),
+      this.notifyProgress(`[${this.llm.name}] ${message}`, value),
     );
-    this.tts.on('notify', text => this.notify(`[${this.tts.constructor.name}] ${text}`));
-    this.tts.on('error', text => this.notifyError(`[${this.tts.constructor.name}] ${text}`));
+    this.tts.on('notify', text => this.notify(`[${this.tts.name}] ${text}`));
+    this.tts.on('error', text => this.notifyError(`[${this.tts.name}] ${text}`));
     this.tts.on('progress', (message: string, value: number) =>
-      this.notifyProgress(`[${this.tts.constructor.name}] ${message}`, value),
+      this.notifyProgress(`[${this.tts.name}] ${message}`, value),
     );
   }
 

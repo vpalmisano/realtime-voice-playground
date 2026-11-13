@@ -63,6 +63,7 @@ async function createEphemeralClientSecret(
 }
 
 export class OpenAISTT extends BaseProvider {
+  readonly name = 'OpenAISTT';
   private readonly apiKey: string;
   private readonly model: string;
   private readonly silenceDurationMs: number;

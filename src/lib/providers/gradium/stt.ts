@@ -24,6 +24,7 @@ export type GradiumSTTOptions = {
 };
 
 export class GradiumSTT extends BaseProvider {
+  readonly name = 'GradiumSTT';
   private readonly client: GradiumClient;
   private readonly model: string;
   private readonly language: string;

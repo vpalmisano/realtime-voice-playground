@@ -19,6 +19,7 @@ export const DEFAULT_CONTEXT =
 export type VadOptions = Omit<VoiceActivityDetectorOptions, 'track'>;
 
 export abstract class BaseProvider extends EventEmitter {
+  abstract readonly name: string;
   public sourceAudioTrack: MediaStreamTrack | null = null;
   public outputAudioTrack: MediaStreamTrack | null = null;
   public sourceAudioVad: VoiceActivityDetector | null = null;

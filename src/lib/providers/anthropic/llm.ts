@@ -21,6 +21,7 @@ export const DEFAULT_MAX_TOKENS = 1024;
 export const DEFAULT_USE_PROMPT_CACHE = true;
 
 export class AnthropicLLM extends BaseProvider {
+  readonly name = 'AnthropicLLM';
   private readonly client: Anthropic;
   private readonly model: string;
   private readonly context: string;

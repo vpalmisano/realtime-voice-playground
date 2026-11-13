@@ -19,6 +19,7 @@ export const DEFAULT_MODEL = 'gpt-5.4';
 export const DEFAULT_USE_PROMPT_CACHE = true;
 
 export class OpenAILLM extends BaseProvider {
+  readonly name = 'OpenAILLM';
   private readonly client: OpenAI;
   private readonly model: string;
   private readonly context: string;

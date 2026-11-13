@@ -16,6 +16,7 @@ export type GoogleTTSOptions = {
 };
 
 export class GoogleTTS extends BaseProvider {
+  readonly name = 'GoogleTTS';
   private readonly client: GoogleGenAI;
   private readonly model: string;
   private readonly voice: string;

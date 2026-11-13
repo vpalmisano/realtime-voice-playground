@@ -90,6 +90,7 @@ async function createEphemeralClientSecret(apiKey: string, model: string): Promi
 }
 
 export class OpenAIRealtime extends BaseProvider {
+  readonly name = 'OpenAIRealtime';
   private readonly transportType: TransportType;
   private readonly model: string;
   private readonly voice: string;

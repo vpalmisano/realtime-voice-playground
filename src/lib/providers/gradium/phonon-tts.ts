@@ -25,6 +25,7 @@ export type GradiumPhononTTSOptions = {
 };
 
 export class GradiumPhononTTS extends BaseProvider {
+  readonly name = 'GradiumPhononTTS';
   private readonly voiceId: string;
   private readonly quant: PhononQuant;
   private readonly preferredDevice: PhononDevice;

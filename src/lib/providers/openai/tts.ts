@@ -17,6 +17,7 @@ export type OpenAITTSOptions = {
 };
 
 export class OpenAITTS extends BaseProvider {
+  readonly name = 'OpenAITTS';
   private readonly client: OpenAI;
   private readonly model: string;
   private readonly voice: string;

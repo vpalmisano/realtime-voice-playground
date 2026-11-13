@@ -23,6 +23,7 @@ export type NvidiaNemotronLLMOptions = {
 };
 
 export class NvidiaNemotronLLM extends BaseProvider {
+  readonly name = 'NvidiaNemotronLLM';
   private readonly device: NemotronLlmDevice;
   private readonly context: string;
   private readonly maxUserMessages: number;

@@ -15,6 +15,7 @@ export const DEFAULT_MODEL = 'gemini-3.5-transcribe-live';
 export const TRANSCRIPTION_MODES = ['VERBATIM', 'SMART'] as const;
 
 export class GoogleSTT extends BaseProvider {
+  readonly name = 'GoogleSTT';
   private readonly apiKey: string;
   private readonly model: string;
   private readonly mode: 'VERBATIM' | 'SMART';

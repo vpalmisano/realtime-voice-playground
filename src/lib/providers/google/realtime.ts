@@ -16,6 +16,7 @@ export const DEFAULT_MODEL = 'gemini-3.8-live';
 export const DEFAULT_VOICE = 'Puck';
 
 export class GoogleAIRealtime extends BaseProvider {
+  readonly name = 'GoogleAIRealtime';
   private model: string;
   private voice: string;
   private apiKey: string;

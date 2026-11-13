@@ -17,6 +17,7 @@ export type SpeechifyTTSOptions = {
 };
 
 export class SpeechifyTTS extends BaseProvider {
+  readonly name = 'SpeechifyTTS';
   private readonly client: SpeechifyClient;
   private readonly model: string;
   private readonly voiceId: string;

@@ -18,6 +18,7 @@ export const DEFAULT_MODEL = 'gemini-3.8-flash';
 export const DEFAULT_USE_PROMPT_CACHE = true;
 
 export class GoogleLLM extends BaseProvider {
+  readonly name = 'GoogleLLM';
   private readonly client: GoogleGenAI;
   private readonly model: string;
   private readonly context: string;

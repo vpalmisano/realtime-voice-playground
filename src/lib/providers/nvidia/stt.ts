@@ -32,6 +32,7 @@ function resolveLangId(language: string): number {
 }
 
 export class NvidiaNemotronSTT extends BaseProvider {
+  readonly name = 'NvidiaNemotronSTT';
   private readonly language: string;
   private readonly langId: number;
   private readonly profile: NemotronProfile;

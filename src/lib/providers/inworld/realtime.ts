@@ -99,6 +99,7 @@ function toApiTurnDetection(turnDetection: TurnDetection) {
 }
 
 export class InworldRealtime extends BaseProvider {
+  readonly name = 'InworldRealtime';
   private readonly transportType: TransportType;
   private readonly model: string;
   private readonly voice: string;

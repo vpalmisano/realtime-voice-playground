@@ -44,6 +44,7 @@ function waitUntil(condition: () => boolean, intervalMs = 20): Promise<void> {
 }
 
 export class MistralVoxtralSTT extends BaseProvider {
+  readonly name = 'MistralVoxtralSTT';
   private readonly device: VoxtralDevice;
   private readonly maxNewTokens: number;
   private readonly turnFlushMs: number;
