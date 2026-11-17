@@ -17,6 +17,7 @@ class Pcm16PlaybackProcessor extends AudioWorkletProcessor {
     this._read = 0;
     this._write = 0;
     this._available = 0;
+    this._pendingByte = null;
 
     this.port.onmessage = event => {
       const { type, audio } = event.data ?? {};
@@ -24,6 +25,7 @@ class Pcm16PlaybackProcessor extends AudioWorkletProcessor {
         this._read = 0;
         this._write = 0;
         this._available = 0;
+        this._pendingByte = null;
         return;
       }
       if (this._format === 'f32') {
@@ -52,11 +54,29 @@ class Pcm16PlaybackProcessor extends AudioWorkletProcessor {
   }
 
   _enqueueI16Bytes(bytes) {
-    const byteLength = bytes.byteLength & ~1;
+    let normalized = bytes;
+
+    if (this._pendingByte !== null) {
+      const merged = new Uint8Array(bytes.byteLength + 1);
+      merged[0] = this._pendingByte;
+      merged.set(bytes, 1);
+      normalized = merged;
+      this._pendingByte = null;
+    }
+
+    const byteLength = normalized.byteLength & ~1;
     if (!byteLength) {
+      if (normalized.byteLength === 1) {
+        this._pendingByte = normalized[0];
+      }
       return;
     }
-    this._enqueue(new Int16Array(bytes.buffer, bytes.byteOffset, byteLength / 2));
+
+    if (byteLength < normalized.byteLength) {
+      this._pendingByte = normalized[normalized.byteLength - 1];
+    }
+
+    this._enqueue(new Int16Array(normalized.buffer, normalized.byteOffset, byteLength / 2));
   }
 
   _grow(minCapacity) {

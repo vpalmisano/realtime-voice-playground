@@ -2,6 +2,7 @@
 import { defineReference } from './utils';
 
 const STT_PROVIDERS = [
+  'AssemblyAI',
   'Cohere Transcribe',
   'ElevenLabs',
   'Google',
@@ -12,6 +13,7 @@ const STT_PROVIDERS = [
 ] as const;
 const LLM_PROVIDERS = ['Anthropic', 'Google', 'NVIDIA Nemotron 3 Nano 4B', 'OpenAI'] as const;
 const TTS_PROVIDERS = [
+  'AssemblyAI',
   'Cartesia',
   'ElevenLabs',
   'Google',
@@ -41,6 +43,7 @@ export function getTtsProvider(): (typeof TTS_PROVIDERS)[number] {
 <script setup lang="ts">
 import { ref } from 'vue';
 import CohereSTTSettings from './providers/cohere/CohereSTT.vue';
+import AssemblyAISTTSettings from './providers/assemblyai/AssemblyAISTT.vue';
 import ElevenLabsSTTSettings from './providers/elevenlabs/ElevenLabsSTT.vue';
 import GoogleSTTSettings from './providers/google/GoogleSTT.vue';
 import OpenaiSTTSettings from './providers/openai/OpenaiSTT.vue';
@@ -56,6 +59,7 @@ import GoogleTTSSettings from './providers/google/GoogleTTS.vue';
 import OpenaiTTSSettings from './providers/openai/OpenaiTTS.vue';
 import SpeechifyTTSSettings from './providers/speechify/SpeechifyTTS.vue';
 import CartesiaTTSSettings from './providers/cartesia/CartesiaTTS.vue';
+import AssemblyAITTSSettings from './providers/assemblyai/AssemblyAITTS.vue';
 import GradiumTTSSettings from './providers/gradium/GradiumTTS.vue';
 import GradiumPhononTTSSettings from './providers/gradium/GradiumPhononTTS.vue';
 
@@ -86,7 +90,8 @@ const step = ref('1');
             />
           </v-col>
         </v-row>
-        <CohereSTTSettings v-if="sttProvider === 'Cohere Transcribe'" />
+        <AssemblyAISTTSettings v-if="sttProvider === 'AssemblyAI'" />
+        <CohereSTTSettings v-else-if="sttProvider === 'Cohere Transcribe'" />
         <ElevenLabsSTTSettings v-else-if="sttProvider === 'ElevenLabs'" />
         <GoogleSTTSettings v-else-if="sttProvider === 'Google'" />
         <OpenaiSTTSettings v-else-if="sttProvider === 'OpenAI'" />
@@ -129,7 +134,8 @@ const step = ref('1');
             />
           </v-col>
         </v-row>
-        <ElevenLabsTTSSettings v-if="ttsProvider === 'ElevenLabs'" />
+        <AssemblyAITTSSettings v-if="ttsProvider === 'AssemblyAI'" />
+        <ElevenLabsTTSSettings v-else-if="ttsProvider === 'ElevenLabs'" />
         <GoogleTTSSettings v-else-if="ttsProvider === 'Google'" />
         <OpenaiTTSSettings v-else-if="ttsProvider === 'OpenAI'" />
         <SpeechifyTTSSettings v-else-if="ttsProvider === 'Speechify'" />

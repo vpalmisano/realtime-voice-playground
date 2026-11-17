@@ -13,9 +13,9 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
   - **OpenAI / Google / ElevenLabs / Inworld Realtime** — single-provider voice-to-voice sessions
   - **Custom** — compose a pipeline from separate STT, LLM, and TTS providers
 - **Custom pipeline providers**:
-  - **STT**: Cohere (local), ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
+  - **STT**: AssemblyAI, Cohere (local), ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
   - **LLM**: Anthropic, Google, Nvidia (local), OpenAI
-  - **TTS**: Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
+  - **TTS**: AssemblyAI, Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
 - **Transports**: WebSocket or WebRTC (OpenAI / Inworld Realtime); WebSocket (Google, ElevenLabs, Gradium)
 - **Session options**: model, voice, transcription, turn detection, and system instructions
 - **Chat**: send text messages or speak via the microphone
@@ -40,6 +40,7 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 | Gradium    | [gradium.ai](https://gradium.ai)                                                   | STT/TTS (Custom pipeline)                     |
 | Cartesia   | [cartesia.ai](https://cartesia.ai)                                                 | TTS (Custom pipeline)                         |
 | Speechify  | [console.sws.speechify.com](https://console.sws.speechify.com)                     | TTS (Custom pipeline)                         |
+| AssemblyAI | [assemblyai.com/dashboard/home](https://www.assemblyai.com/dashboard/home)         | STT/TTS (Custom pipeline)                     |
 
 ## Quick start
 
@@ -67,11 +68,11 @@ With fake audio enabled and connected, click a prompt under **Audio inputs** to 
 
 Pick a provider for each stage in the stepper. Audio is transcribed by STT, text goes to the LLM, and the LLM reply is spoken by TTS.
 
-| Stage | Providers                                                                | Typical defaults                               |
-| ----- | ------------------------------------------------------------------------ | ---------------------------------------------- |
-| STT   | Cohere, ElevenLabs, Google, Gradium, Mistral, Nvidia, OpenAI             | e.g. `scribe_v2_realtime`, `gpt-4o-transcribe` |
-| LLM   | Anthropic, Google, Nvidia, OpenAI                                        | e.g. `claude-sonnet-5-5`, `gpt-5.4`            |
-| TTS   | Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify | e.g. `eleven_flash_v2_5`, `sonic-latest`       |
+| Stage | Providers                                                                            | Typical defaults                              |
+| ----- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
+| STT   | AssemblyAI, Cohere, ElevenLabs, Google, Gradium, Mistral, Nvidia, OpenAI             | e.g. `universal-3-6-pro`, `gpt-4o-transcribe` |
+| LLM   | Anthropic, Google, Nvidia, OpenAI                                                    | e.g. `claude-sonnet-5-5`, `gpt-5.4`           |
+| TTS   | AssemblyAI, Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify | e.g. `assemblyai-tts-1`, `eleven_flash_v2_5`  |
 
 Gradium STT/TTS use WebSocket via [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk). Because Gradium’s token endpoint does not return CORS headers on the preflight, install and enable the [Access-Control-Allow-Origin](https://mybrowseraddon.com/access-control-allow-origin.html) browser extension before connecting.
 
@@ -151,6 +152,7 @@ Paste the **Basic (Base64)** credential from [Inworld Portal → API Keys](https
 - [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk) Gradium STT / TTS
 - [`@huggingface/transformers`](https://huggingface.co/docs/transformers.js) Cohere / Mistral / Nvidia on-device models
 - [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) Gradium Phonon on-device TTS
+- [`assemblyai`](https://www.npmjs.com/package/assemblyai) AssemblyAI STT/TTS
 - [`@speechify/api`](https://docs.sws.speechify.com) Speechify TTS
 - [`@vpalmisano/webrtcperf-js`](https://github.com/vpalmisano/webrtcperf-js) for fake media, Q&A turns, and plots
 

@@ -4,6 +4,7 @@ import {
   getTtsProvider as getTtsProviderName,
 } from '../PipelineSettings.vue';
 import { getOptions as getElevenLabsSTTOptions } from './elevenlabs/ElevenLabsSTT.vue';
+import { getOptions as getAssemblyAISTTOptions } from './assemblyai/AssemblyAISTT.vue';
 import { getOptions as getElevenLabsTTSOptions } from './elevenlabs/ElevenLabsTTS.vue';
 import { getOptions as getGoogleSTTOptions } from './google/GoogleSTT.vue';
 import { getOptions as getGoogleTTSOptions } from './google/GoogleTTS.vue';
@@ -14,6 +15,7 @@ import { getOptions as getOpenaiLLMOptions } from './openai/OpenaiLLM.vue';
 import { getOptions as getAnthropicLLMOptions } from './anthropic/AnthropicLLM.vue';
 import { getOptions as getSpeechifyTTSOptions } from './speechify/SpeechifyTTS.vue';
 import { getOptions as getCartesiaTTSOptions } from './cartesia/CartesiaTTS.vue';
+import { getOptions as getAssemblyAITTSOptions } from './assemblyai/AssemblyAITTS.vue';
 import { getOptions as getGradiumSTTOptions } from './gradium/GradiumSTT.vue';
 import { getOptions as getGradiumTTSOptions } from './gradium/GradiumTTS.vue';
 import { getOptions as getGradiumPhononTTSOptions } from './gradium/GradiumPhononTTS.vue';
@@ -22,6 +24,7 @@ import { getOptions as getMistralVoxtralSTTOptions } from './mistral/MistralVoxt
 import { getOptions as getNvidiaNemotronSTTOptions } from './nvidia/NvidiaNemotronSTT.vue';
 import { getOptions as getNvidiaNemotronLLMOptions } from './nvidia/NvidiaNemotronLLM.vue';
 import { ElevenLabsSTT } from '../lib/providers/elevenlabs/stt.ts';
+import { AssemblyAISTT } from '../lib/providers/assemblyai/stt.ts';
 import { ElevenLabsTTS } from '../lib/providers/elevenlabs/tts.ts';
 import { GoogleSTT } from '../lib/providers/google/stt.ts';
 import { GoogleTTS } from '../lib/providers/google/tts.ts';
@@ -32,6 +35,7 @@ import { OpenAILLM } from '../lib/providers/openai/llm.ts';
 import { AnthropicLLM } from '../lib/providers/anthropic/llm.ts';
 import { SpeechifyTTS } from '../lib/providers/speechify/tts.ts';
 import { CartesiaTTS } from '../lib/providers/cartesia/tts.ts';
+import { AssemblyAITTS } from '../lib/providers/assemblyai/tts.ts';
 import type { BaseProvider } from '../lib/providers/base.ts';
 import { getVadOptions } from '../PerfSettings.vue';
 import { GradiumSTT } from '../lib/providers/gradium/stt.ts';
@@ -45,6 +49,8 @@ import { NvidiaNemotronLLM } from '../lib/providers/nvidia/llm.ts';
 export function getSttProvider(): BaseProvider {
   const vadOptions = getVadOptions();
   switch (getSttProviderName()) {
+    case 'AssemblyAI':
+      return new AssemblyAISTT(getAssemblyAISTTOptions(), vadOptions);
     case 'Cohere Transcribe':
       return new CohereSTT(getCohereSTTOptions(), vadOptions);
     case 'Google':
@@ -90,6 +96,8 @@ export function getTtsProvider(): BaseProvider {
       return new SpeechifyTTS(getSpeechifyTTSOptions(), vadOptions);
     case 'Cartesia':
       return new CartesiaTTS(getCartesiaTTSOptions(), vadOptions);
+    case 'AssemblyAI':
+      return new AssemblyAITTS(getAssemblyAITTSOptions(), vadOptions);
     case 'ElevenLabs':
       return new ElevenLabsTTS(getElevenLabsTTSOptions(), vadOptions);
     case 'Gradium':

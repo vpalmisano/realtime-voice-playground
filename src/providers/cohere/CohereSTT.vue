@@ -43,14 +43,8 @@ defineOptions({ name: 'CohereSTTSettings' });
           target="_blank"
           rel="noopener noreferrer"
           >Transformers.js / WebGPU</a
-        >
-        (<a
-          href="https://huggingface.co/spaces/CohereLabs/Cohere-Transcribe-WebGPU"
-          target="_blank"
-          rel="noopener noreferrer"
-          >demo</a
-        >). First load downloads the q4 ONNX weights (cached afterwards). Language must be set —
-        there is no auto-detect.
+        >. First load downloads the weights (cached afterwards). Language must be set — there is no
+        auto-detect.
       </v-alert>
     </v-col>
     <v-col cols="12" md="6" lg="4">
