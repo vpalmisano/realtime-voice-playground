@@ -102,6 +102,7 @@ let session: BaseProvider | null = null;
 
 const notificationsQueue = ref<SnackbarMessage[]>([]);
 const progressNotifications = reactive(new Map<string, { text: string; value: number }>());
+const progressNotificationEntries = computed(() => [...progressNotifications.entries()]);
 
 async function onConnect() {
   if (connecting.value || connected.value) return;
@@ -413,14 +414,14 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
       </v-container>
 
       <v-snackbar
-        :model-value="progressNotifications.size > 0"
+        :model-value="progressNotificationEntries.length > 0"
         color="info"
         :timeout="-1"
         location="top"
         multi-line
       >
         <div
-          v-for="[key, item] in progressNotifications"
+          v-for="[key, item] in progressNotificationEntries"
           :key="key"
           class="d-flex align-center ga-2 mb-1"
         >
