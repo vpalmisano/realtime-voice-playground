@@ -13,6 +13,9 @@ import ElevenLabsSettings, {
 import InworldSettings, {
   getOptions as getInworldOptions,
 } from './providers/inworld/InworldRealtime.vue';
+import PhonicSettings, {
+  getOptions as getPhonicOptions,
+} from './providers/phonic/PhonicRealtime.vue';
 import PipelineSettings, {
   getLlmProvider as getLlmProviderName,
   getSttProvider as getSttProviderName,
@@ -33,6 +36,7 @@ import { defineReference } from './utils.ts';
 import { GoogleAIRealtime } from './lib/providers/google/realtime.ts';
 import { ElevenLabsRealtime } from './lib/providers/elevenlabs/realtime.ts';
 import { InworldRealtime } from './lib/providers/inworld/realtime.ts';
+import { PhonicRealtime } from './lib/providers/phonic/realtime.ts';
 import { OpenAILLM } from './lib/providers/openai/llm.ts';
 import LiveWaveform, { INPUT_COLOR, OUTPUT_COLOR } from './LiveWaveform.vue';
 import { PipelineSession } from './lib/pipeline.ts';
@@ -50,6 +54,7 @@ const PROVIDERS = [
   'Google Realtime',
   'Inworld Realtime',
   'OpenAI Realtime',
+  'Phonic Realtime',
 ] as const;
 
 const plotsEl = ref<HTMLElement | null>(null);
@@ -85,6 +90,8 @@ const settingsComponent = computed(() => {
       return ElevenLabsSettings;
     case 'Inworld Realtime':
       return InworldSettings;
+    case 'Phonic Realtime':
+      return PhonicSettings;
     default:
       return PipelineSettings;
   }
@@ -117,6 +124,9 @@ async function onConnect() {
         break;
       case 'Inworld Realtime':
         session = new InworldRealtime(getInworldOptions(), getVadOptions());
+        break;
+      case 'Phonic Realtime':
+        session = new PhonicRealtime(getPhonicOptions(), getVadOptions());
         break;
       default: {
         session = new PipelineSession(getSttProvider(), getLlmProvider(), getTtsProvider());

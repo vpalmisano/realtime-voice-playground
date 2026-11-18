@@ -2,7 +2,7 @@
 
 [Live demo](https://vpalmisano.github.io/realtime-voice-playground/) · [Hugging Face Space](https://huggingface.co/spaces/vpalmisano/realtime-voice-playground)
 
-An interactive webapp for trying voice AI — either **end-to-end realtime** models (OpenAI, Google, ElevenLabs, Inworld) or a **custom STT → LLM → TTS pipeline** with different providers.
+An interactive webapp for trying voice AI — either **end-to-end realtime** models (OpenAI, Google, ElevenLabs, Inworld, Phonic) or a **custom STT → LLM → TTS pipeline** with different providers.
 Configure options, chat by text or mic, and optionally run scripted Q&A with [webrtcperf-js](https://github.com/vpalmisano/webrtcperf-js).
 
 ![Demo](public/docs/demo.png)
@@ -10,13 +10,13 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 ## Features
 
 - **Modes**:
-  - **OpenAI / Google / ElevenLabs / Inworld Realtime** — single-provider voice-to-voice sessions
+  - **OpenAI / Google / ElevenLabs / Inworld / Phonic Realtime** — single-provider voice-to-voice sessions
   - **Custom** — compose a pipeline from separate STT, LLM, and TTS providers
 - **Custom pipeline providers**:
   - **STT**: AssemblyAI, Cohere (local), ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
   - **LLM**: Anthropic, Google, Nvidia (local), OpenAI
   - **TTS**: AssemblyAI, Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
-- **Transports**: WebSocket or WebRTC (OpenAI / Inworld Realtime); WebSocket (Google, ElevenLabs, Gradium)
+- **Transports**: WebSocket or WebRTC (OpenAI / Inworld Realtime); WebSocket (Google, ElevenLabs, Gradium, Phonic)
 - **Session options**: model, voice, transcription, turn detection, and system instructions
 - **Chat**: send text messages or speak via the microphone
 - **Live waveform**: input/output audio visualization while connected
@@ -37,6 +37,7 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
 | Google     | [aistudio.google.com/apikey](https://aistudio.google.com/apikey)                   | Gemini Live, STT, LLM, and/or TTS             |
 | ElevenLabs | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) | Realtime needs `convai_write`; also STT/TTS   |
 | Inworld    | [platform.inworld.ai](https://platform.inworld.ai)                                 | Realtime WebRTC/WebSocket; Basic (Base64) key |
+| Phonic     | [phonic.ai](https://www.phonic.ai)                                                 | Realtime WebSocket STS; API key               |
 | Gradium    | [gradium.ai](https://gradium.ai)                                                   | STT/TTS (Custom pipeline)                     |
 | Cartesia   | [cartesia.ai](https://cartesia.ai)                                                 | TTS (Custom pipeline)                         |
 | Speechify  | [console.sws.speechify.com](https://console.sws.speechify.com)                     | TTS (Custom pipeline)                         |
@@ -55,12 +56,12 @@ Open the URL Vite prints (default `http://localhost:5173`), choose a **Provider*
 
 ### Shared
 
-| Control                  | What it does                                                                                 |
-| ------------------------ | -------------------------------------------------------------------------------------------- |
-| **Provider**             | `Custom`, `ElevenLabs Realtime`, `Google Realtime`, `Inworld Realtime`, or `OpenAI Realtime` |
-| **Use fake audio input** | Override mic with scripted clips; shows audio-input buttons                                  |
-| **Save output audio**    | Write assistant PCM to WAV downloads                                                         |
-| **Q&A estimator**        | Min talking/silent duration and detector (`simple` / `silero`)                               |
+| Control                  | What it does                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **Provider**             | `Custom`, `ElevenLabs Realtime`, `Google Realtime`, `Inworld Realtime`, `OpenAI Realtime`, or `Phonic Realtime` |
+| **Use fake audio input** | Override mic with scripted clips; shows audio-input buttons                                                     |
+| **Save output audio**    | Write assistant PCM to WAV downloads                                                                            |
+| **Q&A estimator**        | Min talking/silent duration and detector (`simple` / `silero`)                                                  |
 
 With fake audio enabled and connected, click a prompt under **Audio inputs** to inject that clip as the microphone stream. Turn timing is logged in the messages panel.
 
@@ -130,6 +131,21 @@ Supports [WebRTC](https://docs.inworld.ai/realtime/quickstart-webrtc) and [WebSo
 
 Paste the **Basic (Base64)** credential from [Inworld Portal → API Keys](https://platform.inworld.ai).
 
+### Phonic Realtime
+
+Uses Phonic’s speech-to-speech WebSocket (`wss://api.phonic.ai/v1/sts/ws`). The app mints a short-lived session token from your API key (browsers cannot set `Authorization` on WebSockets), then streams PCM16 @ 16 kHz. Audio chunks are capped at 40 ms per Phonic’s API.
+
+| Control         | What it does                                                    |
+| --------------- | --------------------------------------------------------------- |
+| **Model**       | `phonic-1` (default) or `phonic-0.5`                            |
+| **Voice**       | Assistant voice id (e.g. `sabrina`, `grant`, …)                 |
+| **Agent**       | Optional agent name; leave empty for agentless config overrides |
+| **Project**     | Project name (default `main`)                                   |
+| **Turn taking** | `eager` … `very_patient` (default `standard`)                   |
+| **Context**     | System prompt                                                   |
+
+Get an API key from [Phonic](https://www.phonic.ai).
+
 ## Scripts
 
 | Command                           | Description                   |
@@ -154,6 +170,7 @@ Paste the **Basic (Base64)** credential from [Inworld Portal → API Keys](https
 - [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) Gradium Phonon on-device TTS
 - [`assemblyai`](https://www.npmjs.com/package/assemblyai) AssemblyAI STT/TTS
 - [`@speechify/api`](https://docs.sws.speechify.com) Speechify TTS
+- Phonic Realtime via WebSocket STS (`wss://api.phonic.ai/v1/sts/ws`)
 - [`@vpalmisano/webrtcperf-js`](https://github.com/vpalmisano/webrtcperf-js) for fake media, Q&A turns, and plots
 
 ## Licenses
