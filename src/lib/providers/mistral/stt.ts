@@ -238,6 +238,8 @@ export class MistralVoxtralSTT extends BaseProvider {
       printLen = text.length;
       if (printable) {
         this.turnText += printable;
+        log('delta: %s', printable);
+        this.emit('text-delta', printable);
       }
     };
 

@@ -52,14 +52,17 @@ export class AssemblyAISTT extends BaseProvider {
         log('open session=%s', event.id);
       });
       transcriber.on('turn', event => {
-        if (!event.end_of_turn) {
+        const text = event.transcript?.trim();
+        if (!text) {
           return;
         }
-        const text = event.transcript?.trim();
-        if (text) {
-          log('final: %s', text);
-          this.emit('text', text);
+        if (!event.end_of_turn) {
+          log('delta: %s', text);
+          this.emit('text-delta', text);
+          return;
         }
+        log('final: %s', text);
+        this.emit('text', text);
       });
       transcriber.on('error', error => {
         log('error: %o', error);

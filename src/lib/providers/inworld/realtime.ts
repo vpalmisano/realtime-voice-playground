@@ -43,6 +43,7 @@ export const AUDIO_SAMPLE_RATE = 24000;
 type RealtimeEvent = {
   type: string;
   delta?: string;
+  transcript?: string;
   error?: { message?: string; code?: string };
   response?: {
     usage?: {
@@ -479,6 +480,16 @@ export class InworldRealtime extends BaseProvider {
       return;
     }
 
+    if (msg.type === 'conversation.item.input_audio_transcription.completed' && msg.transcript) {
+      this.emit('user-text', msg.transcript);
+      return;
+    }
+
+    if (msg.type === 'response.output_audio_transcript.done' && msg.transcript) {
+      this.emit('assistant-text', msg.transcript);
+      return;
+    }
+
     if (msg.type === 'response.done') {
       const usage = msg.response?.usage;
       if (!usage) return;
@@ -504,12 +515,17 @@ export class InworldRealtime extends BaseProvider {
   }
 
   sendMessage(message: string): void {
+    const text = message.trim();
+    if (!text) {
+      return;
+    }
+    this.emit('user-text', text);
     this.sendEvent({
       type: 'conversation.item.create',
       item: {
         type: 'message',
         role: 'user',
-        content: [{ type: 'input_text', text: message }],
+        content: [{ type: 'input_text', text }],
       },
     });
     this.sendEvent({ type: 'response.create' });

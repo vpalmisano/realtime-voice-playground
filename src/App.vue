@@ -22,6 +22,7 @@ import PipelineSettings, {
   getTtsProvider as getTtsProviderName,
 } from './PipelineSettings.vue';
 import EventsLog, { appendEvent, setStartTime, startTime } from './EventsLog.vue';
+import TextLog, { appendMessage } from './TextLog.vue';
 import PerfSettings, {
   applyPerfConnectSettings,
   getVadOptions,
@@ -162,6 +163,8 @@ async function onConnect() {
       waveformRef.value?.addMarker(timeMs, color, message),
     );
     session.on('close', onDisconnect);
+    session.on('user-text', (text: string) => appendMessage(text, 'user'));
+    session.on('assistant-text', (text: string) => appendMessage(text, 'assistant'));
     await session.start();
 
     if (session instanceof OpenAILLM) {
@@ -383,7 +386,14 @@ async function onTurn(turn: webrtcperf.QuestionAnswerTurn) {
           />
         </div>
 
-        <EventsLog />
+        <v-row class="w-100">
+          <v-col cols="12" md="6">
+            <EventsLog />
+          </v-col>
+          <v-col cols="12" md="6">
+            <TextLog />
+          </v-col>
+        </v-row>
 
         <div class="d-flex flex-wrap align-center ga-2 mb-4">
           <v-text-field

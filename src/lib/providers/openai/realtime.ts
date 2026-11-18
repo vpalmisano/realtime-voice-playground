@@ -200,6 +200,17 @@ export class OpenAIRealtime extends BaseProvider {
         const itemId = 'item_id' in event ? event.item_id : undefined;
         log('transport %s item_id: %s %o', event.type, itemId, event);
       });
+
+      this.session.transport.on('conversation.item.input_audio_transcription.completed', event => {
+        if (event.transcript) {
+          this.emit('user-text', event.transcript);
+        }
+      });
+      this.session.transport.on('response.output_audio_transcript.done', event => {
+        if (event.transcript) {
+          this.emit('assistant-text', event.transcript);
+        }
+      });
       this.session.transport.on('response.done', event => {
         const usage = event.response?.usage;
         if (!usage) {

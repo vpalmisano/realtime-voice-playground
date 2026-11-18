@@ -69,6 +69,12 @@ export class ElevenLabsSTT extends BaseProvider {
       this.connection.on(RealtimeEvents.AUDIO_STARTED, () => {
         log('audio started');
       });
+      this.connection.on(RealtimeEvents.PARTIAL_TRANSCRIPT, data => {
+        if (data.text) {
+          log('delta: %s', data.text);
+          this.emit('text-delta', data.text);
+        }
+      });
       this.connection.on(RealtimeEvents.COMMITTED_TRANSCRIPT, data => {
         log('Committed transcript:', data.text);
         this.emit('text', data.text);

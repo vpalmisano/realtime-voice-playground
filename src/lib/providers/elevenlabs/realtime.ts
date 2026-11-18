@@ -65,6 +65,7 @@ async function createEphemeralClientSecret(
           input: {
             format: { type: 'audio/pcm', rate: AUDIO_SAMPLE_RATE },
             turn_detection: toApiTurnDetection(options.turnDetection),
+            transcription: {},
           },
           output: {
             format: { type: 'audio/pcm' },
@@ -143,6 +144,9 @@ export class ElevenLabsRealtime extends BaseProvider {
         config: {
           outputModalities: ['audio'],
           audio: {
+            input: {
+              transcription: {},
+            },
             output: { voice: this.voice },
           },
         },
@@ -164,6 +168,18 @@ export class ElevenLabsRealtime extends BaseProvider {
         const itemId = 'item_id' in event ? event.item_id : undefined;
         log('transport %s item_id: %s %o', event.type, itemId, event);
       });
+
+      this.session.transport.on('conversation.item.input_audio_transcription.completed', event => {
+        if (event.transcript) {
+          this.emit('user-text', event.transcript);
+        }
+      });
+      this.session.transport.on('response.output_audio_transcript.done', event => {
+        if (event.transcript) {
+          this.emit('assistant-text', event.transcript);
+        }
+      });
+
       this.session.transport.on('response.done', event => {
         const usage = event.response?.usage;
         if (!usage) {
@@ -211,7 +227,12 @@ export class ElevenLabsRealtime extends BaseProvider {
   }
 
   sendMessage(message: string): void {
-    this.session?.sendMessage(message);
+    const text = message.trim();
+    if (!text) {
+      return;
+    }
+    this.emit('user-text', text);
+    this.session?.sendMessage(text);
   }
 
   protected closeSession(reason?: string): void {

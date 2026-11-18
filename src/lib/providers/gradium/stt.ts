@@ -103,8 +103,9 @@ export class GradiumSTT extends BaseProvider {
         if (msg.type === 'text') {
           const text = msg.text?.trim();
           if (text) {
-            log('text: %s', text);
+            log('delta: %s', text);
             this.transcript.push(text);
+            this.emit('text-delta', text);
           }
           continue;
         }

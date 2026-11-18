@@ -63,7 +63,8 @@ export class GoogleSTT extends BaseProvider {
             if (!content) return;
 
             if (content.interimInputTranscription?.text) {
-              log('interim: %s', content.interimInputTranscription.text);
+              log('delta: %s', content.interimInputTranscription.text);
+              this.emit('text-delta', content.interimInputTranscription.text);
             }
 
             const finalText = content.inputTranscription?.text?.trim();

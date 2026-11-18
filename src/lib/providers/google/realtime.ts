@@ -23,6 +23,8 @@ export class GoogleAIRealtime extends BaseProvider {
   private context: string;
   private readonly chunkMs: number;
   private session: Session | null = null;
+  private pendingUserText = '';
+  private pendingAssistantText = '';
 
   constructor(options: GoogleRealtimeOptions, vadOptions?: VadOptions) {
     super();
@@ -56,6 +58,8 @@ export class GoogleAIRealtime extends BaseProvider {
             prebuiltVoiceConfig: { voiceName: this.voice },
           },
         },
+        inputAudioTranscription: {},
+        outputAudioTranscription: {},
       };
       this.session = await ai.live.connect({
         model: this.model,
@@ -75,15 +79,33 @@ export class GoogleAIRealtime extends BaseProvider {
                 }
               }
             }
+            if (content?.inputTranscription?.text) {
+              this.pendingUserText += content.inputTranscription.text;
+              if (content.inputTranscription.finished) {
+                this.flushUserText();
+              }
+            }
+            if (content?.outputTranscription?.text) {
+              // Model started responding — user turn is done.
+              this.flushUserText();
+              this.pendingAssistantText += content.outputTranscription.text;
+              if (content.outputTranscription.finished) {
+                this.flushAssistantText();
+              }
+            }
             if (content?.generationComplete) {
               log('generationComplete: %o', content.generationComplete);
             }
             if (content?.turnComplete) {
               log('turnComplete: %o', content.turnComplete);
+              this.flushUserText();
+              this.flushAssistantText();
             }
             if (content?.interrupted) {
               log('interrupted');
               flush();
+              this.flushUserText();
+              this.flushAssistantText();
             }
             if (message.usageMetadata) {
               const { promptTokenCount, responseTokenCount, totalTokenCount } =
@@ -134,14 +156,39 @@ export class GoogleAIRealtime extends BaseProvider {
   }
 
   sendMessage(message: string) {
+    const text = message.trim();
+    if (!text) {
+      return;
+    }
+    this.emit('user-text', text);
     this.session?.sendRealtimeInput({
-      text: message,
+      text,
     });
   }
 
   protected closeSession(reason?: string): void {
     log('closeSession %s', reason ?? '');
+    this.pendingUserText = '';
+    this.pendingAssistantText = '';
     this.session?.close();
     this.session = null;
+  }
+
+  private flushUserText() {
+    const text = this.pendingUserText.trim();
+    this.pendingUserText = '';
+    if (text) {
+      log('user-text: %s', text);
+      this.emit('user-text', text);
+    }
+  }
+
+  private flushAssistantText() {
+    const text = this.pendingAssistantText.trim();
+    this.pendingAssistantText = '';
+    if (text) {
+      log('assistant-text: %s', text);
+      this.emit('assistant-text', text);
+    }
   }
 }

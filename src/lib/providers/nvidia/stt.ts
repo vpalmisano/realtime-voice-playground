@@ -179,8 +179,9 @@ export class NvidiaNemotronSTT extends BaseProvider {
         log('status: %s', data.detail);
         break;
       case 'partial':
-        if (this.running) {
-          log('partial: %s', data.text);
+        if (this.running && data.text) {
+          log('delta: %s', data.text);
+          this.emit('text-delta', data.text);
         }
         break;
       case 'final':

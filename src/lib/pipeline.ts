@@ -51,11 +51,13 @@ export class PipelineSession extends BaseProvider {
       this.stt.on('text', text => {
         this.marker(Date.now(), 'lightgrey', 'STT text received');
         this.llm.sendMessage(text);
+        this.emit('user-text', text);
       });
 
       this.llm.on('text', text => {
         this.marker(Date.now(), 'lightgrey', 'LLM text received');
         this.tts.sendMessage(text);
+        this.emit('assistant-text', text);
       });
     } catch (error) {
       log('error starting pipeline: %o', error);

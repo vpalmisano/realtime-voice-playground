@@ -131,12 +131,15 @@ export class OpenAISTT extends BaseProvider {
       });
       this.connection.on('conversation.item.input_audio_transcription.delta', event => {
         log('delta: %s', event.delta);
+        this.emit('text-delta', event.delta);
       });
       this.connection.on('conversation.item.input_audio_transcription.failed', event => {
         log('transcription failed: %o', event.error);
+        this.notifyError(event.error?.message || 'OpenAI STT transcription failed');
       });
       this.connection.on('error', event => {
         log('error: %o', event.error);
+        this.notifyError(event.error?.message || 'OpenAI STT error');
       });
       this.connection.socket.addEventListener('close', () => {
         log('WebSocket closed');

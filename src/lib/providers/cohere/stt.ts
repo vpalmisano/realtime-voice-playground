@@ -163,7 +163,8 @@ export class CohereSTT extends BaseProvider {
         skip_special_tokens: true,
         callback_function: (token: string) => {
           if (token) {
-            log('token: %s', token);
+            log('delta: %s', token);
+            this.emit('text-delta', token);
           }
         },
       });

@@ -56,6 +56,8 @@ export class PhonicRealtime extends BaseProvider {
   private ready = false;
   private pushOutputAudio: ((chunk: string) => void) | null = null;
   private flushOutputAudioBuffer: (() => void) | null = null;
+  private pendingUserText = '';
+  private pendingAssistantText = '';
 
   constructor(options: PhonicRealtimeOptions, vadOptions?: VadOptions) {
     super();
@@ -116,15 +118,22 @@ export class PhonicRealtime extends BaseProvider {
       this.notifyError('Phonic session is not ready yet');
       return;
     }
+    const text = message.trim();
+    if (!text) {
+      return;
+    }
+    this.emit('user-text', text);
     this.sendEvent({
       type: 'generate_reply',
-      user_message: message,
+      user_message: text,
     });
   }
 
   protected closeSession(reason?: string): void {
     log('closeSession %s', reason ?? '');
     this.ready = false;
+    this.pendingUserText = '';
+    this.pendingAssistantText = '';
     this.pushOutputAudio = null;
     this.flushOutputAudioBuffer = null;
     if (this.websocket) {
@@ -235,16 +244,33 @@ export class PhonicRealtime extends BaseProvider {
   }
 
   private onServerMessage(msg: PhonicServerMessage) {
+    if (msg.type !== 'audio_chunk') {
+      log('server message: %o', msg);
+    }
     switch (msg.type) {
       case 'audio_chunk':
         if (msg.audio) {
           this.pushOutputAudio?.(atob(msg.audio));
         }
+        if (msg.text) {
+          this.pendingAssistantText += msg.text.trim() + ' ';
+        }
         break;
       case 'user_started_speaking':
+        this.flushOutputAudioBuffer?.();
+        this.flush();
+        this.flushAssistantText();
+        this.flushUserText();
+        break;
       case 'interrupted_response':
         this.flushOutputAudioBuffer?.();
         this.flush();
+        this.flushAssistantText();
+        break;
+      case 'user_finished_speaking':
+        break;
+      case 'input_cancelled':
+        this.pendingUserText = '';
         break;
       case 'conversation_created':
         if (msg.conversation_id) {
@@ -253,13 +279,21 @@ export class PhonicRealtime extends BaseProvider {
         break;
       case 'input_text':
         if (msg.text) {
-          log(`Input text: ${msg.text}`);
+          this.pendingUserText += msg.text.trim() + ' ';
         }
+        break;
+      case 'assistant_started_speaking':
+        log('Assistant started speaking');
+        this.flushUserText();
+        this.flushAssistantText();
         break;
       case 'assistant_finished_speaking':
         log('Assistant finished speaking');
+        this.flushAssistantText();
         break;
       case 'assistant_ended_conversation':
+        this.flushUserText();
+        this.flushAssistantText();
         this.stop('Assistant ended conversation');
         break;
       case 'error':
@@ -272,6 +306,24 @@ export class PhonicRealtime extends BaseProvider {
         break;
       default:
         break;
+    }
+  }
+
+  private flushUserText() {
+    const text = this.pendingUserText.trim();
+    this.pendingUserText = '';
+    if (text) {
+      log('user-text: %s', text);
+      this.emit('user-text', text);
+    }
+  }
+
+  private flushAssistantText() {
+    const text = this.pendingAssistantText.trim();
+    this.pendingAssistantText = '';
+    if (text) {
+      log('assistant-text: %s', text);
+      this.emit('assistant-text', text);
     }
   }
 }
