@@ -22,6 +22,7 @@ import { getOptions as getGradiumPhononTTSOptions } from './gradium/GradiumPhono
 import { getOptions as getCohereSTTOptions } from './cohere/CohereSTT.vue';
 import { getOptions as getMistralVoxtralSTTOptions } from './mistral/MistralVoxtralSTT.vue';
 import { getOptions as getNvidiaNemotronSTTOptions } from './nvidia/NvidiaNemotronSTT.vue';
+import { getOptions as getReson8STTOptions } from './reson8/Reson8STT.vue';
 import { getOptions as getNvidiaNemotronLLMOptions } from './nvidia/NvidiaNemotronLLM.vue';
 import { ElevenLabsSTT } from '../lib/providers/elevenlabs/stt.ts';
 import { AssemblyAISTT } from '../lib/providers/assemblyai/stt.ts';
@@ -44,6 +45,7 @@ import { GradiumPhononTTS } from '../lib/providers/gradium/phonon-tts.ts';
 import { CohereSTT } from '../lib/providers/cohere/stt.ts';
 import { MistralVoxtralSTT } from '../lib/providers/mistral/stt.ts';
 import { NvidiaNemotronSTT } from '../lib/providers/nvidia/stt.ts';
+import { Reson8STT } from '../lib/providers/reson8/stt.ts';
 import { NvidiaNemotronLLM } from '../lib/providers/nvidia/llm.ts';
 
 export function getSttProvider(): BaseProvider {
@@ -65,6 +67,8 @@ export function getSttProvider(): BaseProvider {
       return new MistralVoxtralSTT(getMistralVoxtralSTTOptions(), vadOptions);
     case 'NVIDIA Nemotron 3.5':
       return new NvidiaNemotronSTT(getNvidiaNemotronSTTOptions(), vadOptions);
+    case 'Reson8 Rumble-2-Flash':
+      return new Reson8STT(getReson8STTOptions(), vadOptions);
     default:
       throw new Error('Invalid STT provider');
   }

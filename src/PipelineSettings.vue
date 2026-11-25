@@ -10,6 +10,7 @@ const STT_PROVIDERS = [
   'Mistral Voxtral Mini 4B Realtime 2602',
   'NVIDIA Nemotron 3.5',
   'OpenAI',
+  'Reson8 Rumble-2-Flash',
 ] as const;
 const LLM_PROVIDERS = ['Anthropic', 'Google', 'NVIDIA Nemotron 3 Nano 4B', 'OpenAI'] as const;
 const TTS_PROVIDERS = [
@@ -50,6 +51,7 @@ import OpenaiSTTSettings from './providers/openai/OpenaiSTT.vue';
 import GradiumSTTSettings from './providers/gradium/GradiumSTT.vue';
 import MistralVoxtralSTTSettings from './providers/mistral/MistralVoxtralSTT.vue';
 import NvidiaNemotronSTTSettings from './providers/nvidia/NvidiaNemotronSTT.vue';
+import Reson8STTSettings from './providers/reson8/Reson8STT.vue';
 import OpenaiLLMSettings from './providers/openai/OpenaiLLM.vue';
 import GoogleLLMSettings from './providers/google/GoogleLLM.vue';
 import AnthropicLLMSettings from './providers/anthropic/AnthropicLLM.vue';
@@ -100,6 +102,7 @@ const step = ref('1');
           v-else-if="sttProvider === 'Mistral Voxtral Mini 4B Realtime 2602'"
         />
         <NvidiaNemotronSTTSettings v-else-if="sttProvider === 'NVIDIA Nemotron 3.5'" />
+        <Reson8STTSettings v-else-if="sttProvider === 'Reson8 Rumble-2-Flash'" />
       </v-stepper-window-item>
 
       <v-stepper-window-item value="2">

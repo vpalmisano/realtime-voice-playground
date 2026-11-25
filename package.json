@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "title": "Realtime Voice Playground",
-  "description": "An interactive webapp for trying voice AI — end-to-end realtime models (OpenAI, Google, ElevenLabs, Inworld, Phonic) or a custom STT (AssemblyAI, Cohere, ElevenLabs, Google, Gradium, Mistral, Nvidia, OpenAI) → LLM (Anthropic, Google, Nvidia, OpenAI) → TTS (AssemblyAI, Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify) pipeline.",
+  "description": "An interactive webapp for trying voice AI — end-to-end realtime models (OpenAI, Google, ElevenLabs, Inworld, Phonic) or a custom STT (AssemblyAI, Cohere, ElevenLabs, Google, Gradium, Mistral, Nvidia, OpenAI, Reson8) → LLM (Anthropic, Google, Nvidia, OpenAI) → TTS (AssemblyAI, Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify) pipeline.",
   "keywords": [
     "voice",
     "ai",
@@ -23,7 +23,8 @@
     "phonic",
     "speechify",
     "cartesia",
-    "phonon"
+    "phonon",
+    "reson8"
   ],
   "author": "Vittorio Palmisano",
   "url": "https://vpalmisano.github.io/realtime-voice-playground",

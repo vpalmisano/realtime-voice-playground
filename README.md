@@ -13,7 +13,7 @@ Configure options, chat by text or mic, and optionally run scripted Q&A with [we
   - **OpenAI / Google / ElevenLabs / Inworld / Phonic Realtime** — single-provider voice-to-voice sessions
   - **Custom** — compose a pipeline from separate STT, LLM, and TTS providers
 - **Custom pipeline providers**:
-  - **STT**: AssemblyAI, Cohere (local), ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI
+  - **STT**: AssemblyAI, Cohere (local), ElevenLabs, Google, Gradium, Mistral (local), Nvidia (local), OpenAI, Reson8 (local)
   - **LLM**: Anthropic, Google, Nvidia (local), OpenAI
   - **TTS**: AssemblyAI, Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon (local), OpenAI, Speechify
 - **Transports**: WebSocket or WebRTC (OpenAI / Inworld Realtime); WebSocket (Google, ElevenLabs, Gradium, Phonic)
@@ -71,13 +71,15 @@ Pick a provider for each stage in the stepper. Audio is transcribed by STT, text
 
 | Stage | Providers                                                                            | Typical defaults                              |
 | ----- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
-| STT   | AssemblyAI, Cohere, ElevenLabs, Google, Gradium, Mistral, Nvidia, OpenAI             | e.g. `universal-3-6-pro`, `gpt-4o-transcribe` |
+| STT   | AssemblyAI, Cohere, ElevenLabs, Google, Gradium, Mistral, Nvidia, OpenAI, Reson8     | e.g. `universal-3-6-pro`, `gpt-4o-transcribe` |
 | LLM   | Anthropic, Google, Nvidia, OpenAI                                                    | e.g. `claude-sonnet-5-5`, `gpt-5.4`           |
 | TTS   | AssemblyAI, Cartesia, ElevenLabs, Google, Gradium, Gradium Phonon, OpenAI, Speechify | e.g. `assemblyai-tts-1`, `eleven_flash_v2_5`  |
 
 Gradium STT/TTS use WebSocket via [`@gradium/sdk`](https://www.npmjs.com/package/@gradium/sdk). Because Gradium’s token endpoint does not return CORS headers on the preflight, install and enable the [Access-Control-Allow-Origin](https://mybrowseraddon.com/access-control-allow-origin.html) browser extension before connecting.
 
 **Cohere Transcribe** runs on-device via [`@huggingface/transformers`](https://huggingface.co/docs/transformers.js) + WebGPU ([`onnx-community/cohere-transcribe-03-2026-ONNX`](https://huggingface.co/onnx-community/cohere-transcribe-03-2026-ONNX), no API key). Language must be selected (14 supported); VAD gates each turn before batch transcription.
+
+**Reson8 Rumble-2-Flash** runs locally with ONNX Runtime Web + WebGPU using the [community ONNX conversion](https://huggingface.co/kaptionai/rumble-2-flash-web) (no API key, roughly 494 MB of model files). A WebGPU adapter with `shader-f16` support is required; VAD gates each utterance.
 
 **Gradium Phonon** runs on-device via [`phonon-tts`](https://www.npmjs.com/package/phonon-tts) (WASM worker + [`gradium/phonon-31m-en`](https://huggingface.co/gradium/phonon-31m-en) GGUF, no API key). Weights and voices cache in the browser after the first download.
 
